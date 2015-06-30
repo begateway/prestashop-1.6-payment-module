@@ -66,7 +66,7 @@ Issue pull requests or send feature requests.
   * Создайте резервную копию вашего магазина и базы данных
   * Скачайте архив плагина [begateway.zip](https://github.com/beGateway/prestashop-payment-module/raw/master/begateway.zip)
   * Зайдите в зону администратора магазина и выберете меню _Модули_
-  * Click _Добавить модуль_
+  * Нажмите _Добавить модуль_
 
 ![Добавить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-button-ru.png)
 
