@@ -8,10 +8,15 @@
   * Download [begateway.zip](https://github.com/beGateway/prestashop-payment-module/raw/master/begateway.zip)
   * Login to your Prestashop admin area and select the _Modules_ menu
   * Click _Add a new module_
+
 ![Add a new module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-button.png)
+
   * Upload the archive _begateway.zip_ via a module installer
+
 ![Upload a new module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-file.png)
+
   * Locate _beGateway_ in available modules and install it
+
 ![Install module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-install.png)
 
 ### Module configuration
@@ -62,10 +67,15 @@ Issue pull requests or send feature requests.
   * Скачайте архив плагина [begateway.zip](https://github.com/beGateway/prestashop-payment-module/raw/master/begateway.zip)
   * Зайдите в зону администратора магазина и выберете меню _Модули_
   * Click _Добавить модуль_
+
 ![Добавить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-button-ru.png)
+
   * Загрузите модуль _begateway.zip_ через _ДОБАВИТЬ МОДУЛЬ_
+
 ![Загрузить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-file-ru.png)
+
   * Найдите модуль _beGateway_ в списке модулей и установите его
+
 ![Установить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-install.png)
 
 ### Настройка магазина
