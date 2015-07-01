@@ -1,4 +1,4 @@
-## Prestashop payment module
+## PrestaShop payment module
 
 [Русская версия](#модуль-оплаты-prestashop)
 
@@ -6,7 +6,7 @@
 
   * Backup your webstore and database
   * Download [begateway.zip](https://github.com/beGateway/prestashop-payment-module/raw/master/begateway.zip)
-  * Login to your Prestashop admin area and select the _Modules_ menu
+  * Login to your PrestaShop admin area and select the _Modules_ menu
   * Click _Add a new module_
 
 ![Add a new module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-button.png)
@@ -32,8 +32,8 @@ At the payment module configuration page:
 
 ### Notes
 
-Tested and developed with Prestashop 1.6
-Compatible with Prestashop 1.5
+Tested and developed with PrestaShop 1.6
+Compatible with PrestaShop 1.5
 
 ### Demo credentials
 
@@ -57,7 +57,7 @@ Use the test data to make a test payment:
 
 Issue pull requests or send feature requests.
 
-## Модуль оплаты Prestashop
+## Модуль оплаты PrestaShop
 
 [English version](#prestashop-payment-module)
 
@@ -91,8 +91,8 @@ Issue pull requests or send feature requests.
 
 ### Примечания
 
-Разработанно и протестированно с Prestashop 1.6
-Совместимо с Prestashop 1.5
+Разработанно и протестированно с PrestaShop 1.6
+Совместимо с PrestaShop 1.5
 
 ### Тестовые данные
 
