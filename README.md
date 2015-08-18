@@ -33,6 +33,7 @@ At the payment module configuration page:
 ### Notes
 
 Tested and developed with PrestaShop 1.6
+
 Compatible with PrestaShop 1.5
 
 ### Demo credentials
@@ -92,6 +93,7 @@ Issue pull requests or send feature requests.
 ### Примечания
 
 Разработанно и протестированно с PrestaShop 1.6
+
 Совместимо с PrestaShop 1.5
 
 ### Тестовые данные
@@ -103,6 +105,7 @@ Issue pull requests or send feature requests.
   * Секретный ключ магазина __b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d__
   * Домен платежного шлюза __demo-gateway.begateway.com__
   * Домен платежной страницы __checkout.begateway.com__
+
 Используйте следующий тестовый набор для тестового платежа:
 
   * номер карты __4200000000000000__

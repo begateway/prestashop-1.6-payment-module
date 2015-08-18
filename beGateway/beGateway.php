@@ -210,14 +210,13 @@ class beGateway extends PaymentModule
 
     $currency = new Currency((int)($params['cart']->id_currency));
     $currency_code=trim($currency->iso_code);
-    $amount = number_format(Tools::convertPrice($params['cart']->getOrderTotal(true, 3), $currency), 2, '.', '');
+    $amount = $params['cart']->getOrderTotal(true, 3);
 
     $return_base_url=(Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.'/validation.php?';
     $callbackurl = $return_base_url . 'action=callback';
     $callbackurl = str_replace('carts.local', 'webhook.begateway.com:8443', $callbackurl);
 
     $cancelurl=(Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].__PS_BASE_URI__;
-    #$successurl=(Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'order-confirmation.php?id_cart='.(int)($params['cart']->id).'&id_module='.(int)($this->id).'&key='.$customer->secure_key;
     $successurl = $return_base_url . 'action=success&id_cart='.(int)($params['cart']->id).'&id_module='.(int)($this->id).'&key='.$customer->secure_key;
     $failurl = $return_base_url . 'action=fail';
 
@@ -242,8 +241,8 @@ class beGateway extends PaymentModule
       $transaction->setPaymentTransactionType();
     }
 
-    $transaction->money->setAmount($amount);
     $transaction->money->setCurrency($currency_code);
+    $transaction->money->setAmount($amount);
     $transaction->setDescription($this->l('Order No. ').$params['cart']->id);
     $transaction->setTrackingId($params['cart']->id);
     $transaction->setLanguage($lang_iso_code);
@@ -283,7 +282,7 @@ class beGateway extends PaymentModule
     ));
 
     $template = 'beGateway.tpl';
-error_log(_PS_VERSION_);
+
     if (_PS_VERSION_ < '1.6')
       $template = 'beGateway_1_5.tpl';
 
@@ -303,6 +302,7 @@ error_log(_PS_VERSION_);
       if (isset($transaction_details['uid'])){
         $capture = new \beGateway\Capture;
         $capture->setParentUid($transaction_details['uid']);
+        $capture->money->setCurrency($transaction_details['currency']);
         $capture->money->setAmount($transaction_details['amount']);
 
         $capture_response = $capture->submit();
@@ -328,6 +328,7 @@ error_log(_PS_VERSION_);
 
           $refund = new \beGateway\Refund;
           $refund->setParentUid($transaction_details['uid']);
+          $refund->money->setCurrency($transaction_details['currency']);
           $refund->money->setAmount($_POST['begateway_amount_to_refund']);
           $refund->setReason($this->l('Order Refund :').$_GET['id_order']);
 

@@ -24,8 +24,8 @@ $_MODULE['<{begateway}default-bootstrap>begateway_7c9a3504dd4ce74b8021267ae18029
 $_MODULE['<{begateway}default-bootstrap>begateway_94172d9d28ba97ff34227041ce9f750a'] = 'Домен платежного шлюза';
 $_MODULE['<{begateway}default-bootstrap>begateway_9b819a1c5638a529c210026253f3885c'] = 'Домен платежной страницы';
 $_MODULE['<{begateway}default-bootstrap>begateway_b17f3f4dcf653a5776792498a9b44d6a'] = 'Обновить настройки';
-$_MODULE['<{begateway}default-bootstrap>begateway_65a8a72ea074fea3e5a5001ba4d27aa3'] = 'Номер заказа';
-$_MODULE['<{begateway}default-bootstrap>begateway_d3aa61b32633ad5e5dd2514618151512'] = 'Номер возврата';
+$_MODULE['<{begateway}default-bootstrap>begateway_65a8a72ea074fea3e5a5001ba4d27aa3'] = 'Номер заказа ';
+$_MODULE['<{begateway}default-bootstrap>begateway_d3aa61b32633ad5e5dd2514618151512'] = 'Номер возврата ';
 $_MODULE['<{begateway}default-bootstrap>begateway_ab73c5d092ddbff9466e9f2c62d25c2e'] = 'Вы не можете вернуть больше чем';
 $_MODULE['<{begateway}default-bootstrap>begateway_692f32bb3a33ea6dc488fa8392acc076'] = 'на этот заказ';
 $_MODULE['<{begateway}default-bootstrap>begateway_e6f641ae8ac72385a9556588b0cac77c'] = 'Обработан';
