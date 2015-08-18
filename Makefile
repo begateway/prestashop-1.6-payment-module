@@ -1,2 +1,2 @@
 all:
-	zip -r begateway.zip beGateway
+	rm begateway.zip && zip -r begateway.zip beGateway
