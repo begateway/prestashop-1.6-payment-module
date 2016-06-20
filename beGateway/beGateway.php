@@ -237,7 +237,7 @@ class beGateway extends PaymentModule
 
     $phone = ($address->phone) ? $address->phone : $address->phone_mobile;
 
-    $transaction = new \beGateway\GetPaymentPageToken;
+    $transaction = new \beGateway\GetPaymentToken;
 
     if ($shop_ptype == 'authorization') {
       $transaction->setAuthorizationTransactionType();
@@ -273,7 +273,7 @@ class beGateway extends PaymentModule
       $response = $transaction->submit();
       if ($response->isError()) $err_msg .= $response->getMessage();
       if ($response->isSuccess()) {
-        $paymentUrl = \beGateway\Settings::$checkoutBase . '/checkout?token=' . $response->getToken();
+        $paymentUrl = $response->getRedirectUrl();
       }
     } catch (Exception $e) {
       $err_msg .= $e->getMessage();
