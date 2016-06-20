@@ -1,6 +1,6 @@
 <?php
 
-require_once dirname(__FILE__) . '/beGateway/lib/beGateway.php';
+require_once _PS_MODULE_DIR_ . 'beGateway/beGateway/lib/beGateway.php';
 
 class beGateway extends PaymentModule
 {
@@ -20,8 +20,8 @@ class beGateway extends PaymentModule
 
     \beGateway\Settings::$gatewayBase='https://' . trim(Configuration::get('BEGATEWAY_DOMAIN_GATEWAY'));
     \beGateway\Settings::$checkoutBase = 'https://' . trim(Configuration::get('BEGATEWAY_DOMAIN_CHECKOUT'));
-    \beGateway\Settings::setShopId(trim(Configuration::get('BEGATEWAY_SHOP_ID')));
-    \beGateway\Settings::setShopKey(trim(Configuration::get('BEGATEWAY_SHOP_PASS')));
+    \beGateway\Settings::$shopId  = trim(Configuration::get('BEGATEWAY_SHOP_ID'));
+    \beGateway\Settings::$shopKey = trim(Configuration::get('BEGATEWAY_SHOP_PASS'));
 
     $this->page = basename(__FILE__, '.php');
     $this->displayName = $this->l('beGateway');
@@ -39,11 +39,15 @@ class beGateway extends PaymentModule
       OR !Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', '')
       OR !$this->registerHook('payment')
       OR !$this->registerHook('backOfficeHeader')
-      OR !$this->registerHook('displayHeader')
       OR !$this->registerHook('paymentReturn')
-      OR !$this->installTable())
+      OR !$this->installTable()) {
+        return false;
+    }
 
+    if (_PS_VERSION_ > 1.4 && !$this->registerHook('displayHeader')) {
       return false;
+    }
+
     return true;
   }
 
@@ -146,7 +150,7 @@ class beGateway extends PaymentModule
       return;
 
     $this->context->controller->addCSS(__PS_BASE_URI__.'modules/'.$this->name.'/css/beGateway.css');
-    if (_PS_VERSION_ < '1.6')
+    if (_PS_VERSION_ < 1.6)
       $this->context->controller->addCSS(__PS_BASE_URI__.'modules/'.$this->name.'/css/beGateway_1_5.css');
   }
 
@@ -222,7 +226,7 @@ class beGateway extends PaymentModule
 
     $state_val = NULL;
 
-    if (in_array($country,['US','CA'])) {
+    if (in_array($country, array('US','CA'))) {
       $state = new State((int)$address->id_state);
       if (Validate::isLoadedObject($state)) {
         $state_val = $state->iso_code;
@@ -283,7 +287,7 @@ class beGateway extends PaymentModule
 
     $template = 'beGateway.tpl';
 
-    if (_PS_VERSION_ < '1.6')
+    if (_PS_VERSION_ < 1.6)
       $template = 'beGateway_1_5.tpl';
 
     return $this->display(__FILE__, $template);
@@ -297,7 +301,7 @@ class beGateway extends PaymentModule
     //Capture start
     if (Tools::isSubmit('Submit_beGateway_Capture') && isset($_POST['id_auth']))
     {
-      $transaction_details = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'begateway_transaction WHERE id_begateway_transaction = '.(int)$_POST['id_auth'].' AND type = \'authorization\' AND status = \'successful\'');	
+      $transaction_details = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'begateway_transaction WHERE id_begateway_transaction = '.(int)$_POST['id_auth'].' AND type = \'authorization\' AND status = \'successful\'');
 
       if (isset($transaction_details['uid'])){
         $capture = new \beGateway\Capture;

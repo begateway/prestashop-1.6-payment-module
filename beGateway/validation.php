@@ -48,7 +48,7 @@ if($action!="") {
     }
   } elseif ($action == "success") {
     $url = 'index.php?controller=order-confirmation&';
-    if (_PS_VERSION_ < '1.5')
+    if (_PS_VERSION_ < 1.5)
       $url = 'order-confirmation.php?';
     Tools::redirect($url.'id_module='.$_REQUEST['id_module'].'&id_cart='.
       (int)$_REQUEST['id_cart'].'&key='.$_REQUEST['key']);
@@ -56,7 +56,7 @@ if($action!="") {
   } else {
     $beGateway_status = Configuration::get('PS_OS_ERROR');
     $checkout_type = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc' : 'order';
-    $url = _PS_VERSION_ >= '1.5' ? 'index.php?controller='.$checkout_type.'&' : $checkout_type.'.php?';
+    $url = _PS_VERSION_ >= 1.5 ? 'index.php?controller='.$checkout_type.'&' : $checkout_type.'.php?';
     $url .= 'step=3&cgv=1&beGatewayerror=1';
 
     if (!isset($_SERVER['HTTP_REFERER']) ||

@@ -1,2 +1,3 @@
 all:
-	rm begateway.zip && zip -r begateway.zip beGateway
+	if [[ -e begateway.zip ]]; then rm begateway.zip; fi
+	zip -r begateway.zip beGateway
