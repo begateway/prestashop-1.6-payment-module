@@ -207,7 +207,7 @@ class beGateway extends PaymentModule
     $address = new Address(intval($params['cart']->id_address_invoice));
     $country = Country::getIsoById((int)$address->id_country);
     $lang_iso_code = strtolower(Language::getIsoById((int)$cookie->id_lang));
-    $sp_lang = array('en', 'es', 'tr', 'de', 'it', 'ru', 'zh', 'fr');
+    $sp_lang = \beGateway\Language::getSupportedLanguages();
     if (!in_array($lang_iso_code, $sp_lang)) $lang_iso_code = 'en';
 
     $shop_ptype = trim(Configuration::get('BEGATEWAY_SHOP_PAYTYPE'));
