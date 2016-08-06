@@ -11,7 +11,7 @@ class beGateway extends PaymentModule
   {
     $this->name = 'beGateway';
     $this->tab = 'payments_gateways';
-    $this->version = '1.3.5';
+    $this->version = '1.3.8';
 
     $this->currencies = true;
     $this->currencies_mode = 'checkbox';

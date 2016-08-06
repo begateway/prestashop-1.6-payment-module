@@ -102,7 +102,7 @@ class beGatewayValidation extends beGateway {
     $redirect_url = Context::getContext()->link->getPageLink(
       'order-confirmation', null, null, array(
         'id_order' => $auth_order->id,
-        'id_cart' => (int)$cart->id,
+        'id_cart' => (int)@$_REQUEST['id_cart'],
         'id_module' => (int)$this->be_gateway->id,
         'key' => $auth_order->secure_key,
         'beGatewayerror' => ($error) ? '1':'0'
