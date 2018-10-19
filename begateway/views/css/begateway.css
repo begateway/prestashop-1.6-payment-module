@@ -1,7 +1,7 @@
-p.payment_module a.beGateway_creditcard {
+p.payment_module a.begateway_payment {
   background: url(../img/creditcard.png) 15px 12px no-repeat #fbfbfb;
 }
-div.row p.payment_module a.beGateway_creditcard:after {
+div.row p.payment_module a.begateway_payment:after {
   display: block;
   content: "\f054";
   position: absolute;
