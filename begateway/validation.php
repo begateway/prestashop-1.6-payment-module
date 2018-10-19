@@ -26,10 +26,10 @@
 include(dirname(__FILE__). '/../../config/config.inc.php');
 include(dirname(__FILE__). '/../../header.php');
 
-class beGatewayValidation extends beGateway {
+class begatewayValidation extends begateway {
 
   public function initContent() {
-		$this->be_gateway = new beGateway();
+		$this->be_gateway = new begateway();
 
 		if ($this->be_gateway->active && isset($_REQUEST['action'])) {
       $action=$_REQUEST['action'];
@@ -226,6 +226,6 @@ class beGatewayValidation extends beGateway {
   }
 }
 
-$validation = new beGatewayValidation();
+$validation = new begatewayValidation();
 $validation->initContent();
 ?>

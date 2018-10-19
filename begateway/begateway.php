@@ -1,7 +1,7 @@
 <?php
-require_once _PS_MODULE_DIR_ . 'begateway/beGateway/lib/BeGateway.php';
+require_once _PS_MODULE_DIR_ . 'begateway/lib/BeGateway.php';
 
-class BeGateway extends PaymentModule
+class begateway extends PaymentModule
 {
   private	$_html = '';
   private $_postErrors = array();
