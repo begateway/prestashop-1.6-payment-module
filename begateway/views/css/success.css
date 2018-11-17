@@ -1,0 +1,18 @@
+
+.begateway__loading {
+    text-align: center;
+}
+
+.begateway__loading-image {
+    height: 50px;
+    width: 50px;
+}
+
+.begateway__success,
+.begateway__error {
+    display: none;
+}
+
+.begateway__confirmation p {
+    margin-top: 10px;
+}

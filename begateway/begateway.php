@@ -1,10 +1,14 @@
 <?php
-require_once _PS_MODULE_DIR_ . 'begateway/lib/BeGateway.php';
+require_once _PS_MODULE_DIR_ . 'begateway/lib/BeGatewayAutoload.php';
 
-class begateway extends PaymentModule
+class BeGateway extends PaymentModule
 {
+  const TEST_SHOP   = 361;
+  const TEST_KEY    = 'b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d';
+  const TEST_DOMAIN = 'checkout.begateway.com';
   private	$_html = '';
   private $_postErrors = array();
+  protected $session;
 
   public function __construct()
   {
@@ -19,7 +23,6 @@ class begateway extends PaymentModule
 
     parent::__construct();
 
-    \BeGateway\Settings::$gatewayBase='https://' . trim(Configuration::get('BEGATEWAY_DOMAIN_GATEWAY'));
     \BeGateway\Settings::$checkoutBase = 'https://' . trim(Configuration::get('BEGATEWAY_DOMAIN_CHECKOUT'));
     \BeGateway\Settings::$shopId  = trim(Configuration::get('BEGATEWAY_SHOP_ID'));
     \BeGateway\Settings::$shopKey = trim(Configuration::get('BEGATEWAY_SHOP_PASS'));
@@ -28,16 +31,17 @@ class begateway extends PaymentModule
     $this->displayName = $this->l('BeGateway');
     $this->description = $this->l('Accepts online payments');
     $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
+    $this->session = new BeGatewaySession($this->context);
   }
 
   public function install()
   {
     if (!parent::install()
-      OR !Configuration::updateValue('BEGATEWAY_SHOP_ID', '')
-      OR !Configuration::updateValue('BEGATEWAY_SHOP_PASS', '')
+      OR !Configuration::updateValue('BEGATEWAY_SHOP_ID', $this::TEST_SHOP)
+      OR !Configuration::updateValue('BEGATEWAY_SHOP_PASS', $this::TEST_KEY)
       OR !Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', '')
-      OR !Configuration::updateValue('BEGATEWAY_DOMAIN_GATEWAY', '')
-      OR !Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', '')
+      OR !Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', $this::TEST_DOMAIN)
+      OR !Configuration::updateValue('BEGATEWAY_TEST_MODE', '1')
       OR !$this->registerHook('payment')
       OR !$this->registerHook('backOfficeHeader')
       OR !$this->registerHook('paymentReturn')
@@ -56,12 +60,26 @@ class begateway extends PaymentModule
 
   public function installTable()
   {
-    return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'begateway_transaction` (`id_begateway_transaction` int(11) NOT NULL AUTO_INCREMENT,
-      `type` enum(\'payment\',\'refund\',\'authorization\') NOT NULL, `id_begateway_customer` int(10) unsigned NOT NULL, `id_cart` int(10) unsigned NOT NULL,
-      `id_order` int(10) unsigned NOT NULL, `uid` varchar(60) NOT NULL, `amount` decimal(10,2) NOT NULL, `status` enum(\'incomplete\',\'failed\',\'successful\') NOT NULL,
-      `currency` varchar(3) NOT NULL,  `id_refund` varchar(32) , `refund_amount` decimal(10,2),`au_uid` varchar(60),`token` varchar(100),
-    `date_add` datetime NOT NULL,  PRIMARY KEY (`id_begateway_transaction`), KEY `idx_transaction` (`type`,`id_order`,`status`))
-    ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
+    return Db::getInstance()->Execute('
+      CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'begateway_transaction` (
+        `id_begateway_transaction` int(11) NOT NULL AUTO_INCREMENT,
+        `type` enum(\'payment\',\'refund\',\'authorization\') NOT NULL,
+        `id_begateway_customer` int(10) unsigned NOT NULL,
+        `id_cart` int(10) unsigned NOT NULL,
+        `id_order` int(10) unsigned NOT NULL,
+        `uid` varchar(60) NOT NULL,
+        `amount` decimal(10,2) NOT NULL,
+        `status` enum(\'incomplete\',\'failed\',\'successful\', \'pending\') NOT NULL,
+        `currency` varchar(3) NOT NULL,
+        `id_refund` varchar(32) ,
+        `refund_amount` decimal(10,2),
+        `au_uid` varchar(60),
+        `token` varchar(100),
+        `date_add` datetime NOT NULL,
+      PRIMARY KEY (`id_begateway_transaction`),
+      KEY `idx_transaction` (`type`,`id_order`,`status`)
+    )
+    ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
   }
 
   public function uninstall()
@@ -69,8 +87,8 @@ class begateway extends PaymentModule
     if (!Configuration::deleteByName('BEGATEWAY_SHOP_ID')
       OR !Configuration::deleteByName('BEGATEWAY_SHOP_PASS')
       OR !Configuration::deleteByName('BEGATEWAY_SHOP_PAYTYPE')
-      OR !Configuration::deleteByName('BEGATEWAY_DOMAIN_GATEWAY')
       OR !Configuration::deleteByName('BEGATEWAY_DOMAIN_CHECKOUT')
+      OR !Configuration::deleteByName('BEGATEWAY_TEST_MODE')
       OR !Db::getInstance()->Execute('DROP TABLE `'._DB_PREFIX_.'begateway_transaction`')
       OR !$this->unregisterHook('payment')
       OR !$this->unregisterHook('backOfficeHeader')
@@ -84,16 +102,14 @@ class begateway extends PaymentModule
 
   public function getContent()
   {
-    $this->_html = '<h2>beGateway</h2>';
-    if (isset($_POST['submit_beGateway']))
+    $this->_html = '<h2>BeGateway</h2>';
+    if (isset($_POST['submit_begateway']))
     {
       if (empty($_POST['shop_id']))
         $this->_postErrors[] = $this->l('Shop Id is required.');
       if (empty($_POST['shop_pass']))
         $this->_postErrors[] = $this->l('Shop secret key is required.');
 
-      if (empty($_POST['domain_gateway']))
-        $this->_postErrors[] = $this->l('Payment gateway domain is required.');
       if (empty($_POST['domain_checkout']))
         $this->_postErrors[] = $this->l('Checkout page domain is required.');
       if (!sizeof($this->_postErrors))
@@ -101,8 +117,8 @@ class begateway extends PaymentModule
         Configuration::updateValue('BEGATEWAY_SHOP_ID', strval($_POST['shop_id']));
         Configuration::updateValue('BEGATEWAY_SHOP_PASS', strval($_POST['shop_pass']));
         Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', strval($_POST['payment_type']));
-        Configuration::updateValue('BEGATEWAY_DOMAIN_GATEWAY', strval($_POST['domain_gateway']));
         Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', strval($_POST['domain_checkout']));
+        Configuration::updateValue('BEGATEWAY_TEST_MODE', strval($_POST['test_mode']));
         $this->displayConf();
       }
       else
@@ -140,8 +156,8 @@ class begateway extends PaymentModule
   public function displaybeGateway()
   {
     $this->_html .= '
-      <img src="../modules/beGateway/begateway_logo_admin.png" style="float:left; margin-right:15px;" />
-      <b>'.$this->l('This module allows you to online payments.').'</b><br /><br />
+      <img src="../modules/'.$this->name.'/views/img/admin_logo.png" style="float:left; margin-right:15px;" />
+      <b>'.$this->l('This module allows you to accept online payments.').'</b><br /><br />
       '.$this->l('You need to configure your account with your payment processor first before using this module.').'
       <div style="clear:both;">&nbsp;</div>';
   }
@@ -151,23 +167,35 @@ class begateway extends PaymentModule
     if (!$this->active)
       return;
 
-    $this->context->controller->addCSS(__PS_BASE_URI__.'modules/'.$this->name.'/views/css/begateway.css');
+    $this->context->controller->addCSS(__PS_BASE_URI__.'modules/'.$this->name.'/views/css/front.css');
   }
 
   public function displayFormSettings()
   {
-    $conf = Configuration::getMultiple(array('BEGATEWAY_SHOP_ID', 'BEGATEWAY_SHOP_PASS', 'BEGATEWAY_SHOP_PAYTYPE', 'BEGATEWAY_DOMAIN_GATEWAY', 'BEGATEWAY_DOMAIN_CHECKOUT'));
+    $conf = Configuration::getMultiple(array('BEGATEWAY_SHOP_ID', 'BEGATEWAY_SHOP_PASS', 'BEGATEWAY_SHOP_PAYTYPE', 'BEGATEWAY_DOMAIN_CHECKOUT', 'BEGATEWAY_TEST_MODE'));
     $shop_id = array_key_exists('shop_id', $_POST) ? $_POST['shop_id'] : (array_key_exists('BEGATEWAY_SHOP_ID', $conf) ? $conf['BEGATEWAY_SHOP_ID'] : '');
     $shop_pass = array_key_exists('shop_pass', $_POST) ? $_POST['shop_pass'] : (array_key_exists('BEGATEWAY_SHOP_PASS', $conf) ? $conf['BEGATEWAY_SHOP_PASS'] : '');
     $shop_ptype = array_key_exists('payment_type', $_POST) ? $_POST['payment_type'] : (array_key_exists('BEGATEWAY_SHOP_PAYTYPE', $conf) ? $conf['BEGATEWAY_SHOP_PAYTYPE'] : '');
-    $domain_gateway = array_key_exists('domain_gateway', $_POST) ? $_POST['domain_gateway'] : (array_key_exists('BEGATEWAY_DOMAIN_GATEWAY', $conf) ? $conf['BEGATEWAY_DOMAIN_GATEWAY'] : '');
     $domain_checkout = array_key_exists('domain_checkout', $_POST) ? $_POST['domain_checkout'] : (array_key_exists('BEGATEWAY_DOMAIN_CHECKOUT', $conf) ? $conf['BEGATEWAY_DOMAIN_CHECKOUT'] : '');
+    $test_mode = array_key_exists('test_mode', $_POST) ? $_POST['test_mode'] : (array_key_exists('BEGATEWAY_TEST_MODE', $conf) ? $conf['BEGATEWAY_TEST_MODE'] : '');
     $achk_str = '';
     $pchk_str = '';
 
-    if ($shop_ptype == 'authorization') $achk_str = 'checked=checked';
-    else $pchk_str = 'checked=checked';
+    if ($shop_ptype == 'authorization') {
+      $achk_str = 'checked=checked';
+    } else {
+      $pchk_str = 'checked=checked';
+    }
+
+    if ($test_mode == '1') {
+      $m1chk_str = 'checked=checked';
+    } else {
+      $m2chk_str = 'checked=checked';
+    }
+
     $lang_select = 'selected="selected"';
+
+
     $this->_html .= '
       <form action="'.$_SERVER['REQUEST_URI'].'" method="post" style="clear: both;">
         <fieldset>
@@ -179,19 +207,21 @@ class begateway extends PaymentModule
           </div>
           <label>'.$this->l('Payment Type').'</label>
           <div class="margin-form">
-          <input type="radio" name="payment_type" value="payment" '.$pchk_str.'  /> Payment  &nbsp;&nbsp;
-          <input type="radio" name="payment_type" value="authorization" '.$achk_str.' /> Authorization
-          </div>
-          <label>'.$this->l('Payment gateway domain').'</label>
-          <div class="margin-form"><input type="text" size="82" name="domain_gateway" value="'.htmlentities($domain_gateway, ENT_COMPAT, 'UTF-8').'" />
+            <input type="radio" name="payment_type" value="payment" '.$pchk_str.'  /> '.$this->l('Payment').'  &nbsp;&nbsp;
+            <input type="radio" name="payment_type" value="authorization" '.$achk_str.' /> ' . $this->l('Authorization') .'
           </div>
           <label>'.$this->l('Checkout page domain').'</label>
           <div class="margin-form"><input type="text" size="82" name="domain_checkout" value="'.htmlentities($domain_checkout, ENT_COMPAT, 'UTF-8').'" />
           </div>
+          <label>'.$this->l('Test mode').'</label>
+          <div class="margin-form">
+            <input type="radio" name="test_mode" value="1" '.$m1chk_str.'  /> '.$this->l('Enabled').'  &nbsp;&nbsp;
+            <input type="radio" name="test_mode" value="" '.$m2chk_str.' /> ' . $this->l('Disabled') .'
+          </div>
 
           <br /><br /><br />
 
-          <br /><center><input type="submit" name="submit_beGateway" value="'.$this->l('Update settings').'" class="button" /></center>
+          <br /><center><input type="submit" name="submit_begateway" value="'.$this->l('Update settings').'" class="button" /></center>
         </fieldset>
       </form>
       ';
@@ -202,10 +232,14 @@ class begateway extends PaymentModule
     if (!$this->active)
       return;
 
-    $this->context->smarty->assign('begateway_path',$this->_path);
-    $this->context->smarty->assign('order_id', (int)$params['cart']->id);
+    $this->context->smarty->assign(
+      [
+        'begateway_path' => $this->getPathUri(),
+        'contoller_link' => BeGatewayHelper::controllerLink('payment')
+      ]
+    );
 
-    return $this->display(__FILE__, 'views/templates/hook/begateway.tpl');
+    return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
   }
 
   public function hookBackOfficeHeader()
@@ -424,5 +458,36 @@ class begateway extends PaymentModule
 
     return false;
   }
+
+  public function getPathUri()
+  {
+      return parent::getPathUri();
+  }
+
+  public function getOrderById($id)
+  {
+      if (empty($id)) {
+          return;
+      }
+
+      $order = new Order($id);
+      if (Validate::isLoadedObject($order)) {
+          return new BeGatewayOrder($order);
+      }
+  }
+
+  public function getCurrentOrder()
+  {
+      if (empty($this->currentOrder)) {
+          return;
+      }
+
+      return $this->getOrderById($this->currentOrder);
+  }
+
+  public function getSession()
+  {
+      return $this->session;
+  }
+
 }
-?>

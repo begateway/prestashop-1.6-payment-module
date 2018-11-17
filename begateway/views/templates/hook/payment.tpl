@@ -25,9 +25,9 @@
 <div class="row">
     <div class="col-xs-12 col-md-6">
         <div class="payment_module" id="begateway_payment_module">
-            <a href="{$begateway_path}validation.php?action=payment&order_id={$order_id|escape:'htmlall':'UTF-8'}" title="{l s='Proceed to payment' mod='beGateway'}" class="begateway">
-                <p>{l s='Proceed to payment' mod='beGateway'}</p>
-                <p><img src="{$begateway_path|escape:'htmlall':'UTF-8'}views/img/creditcard.png" alt="{l s='Proceed to payment' mod='beGateway'}" id="begateway_img" /></p>
+            <a href="{$contoller_link|escape:'htmlall':'UTF-8'}" title="{l s='Proceed to payment' mod='begateway'}" class="begateway">
+                <p>{l s='Proceed to payment' mod='begateway'}</p>
+                <p><img src="{$begateway_path|escape:'htmlall':'UTF-8'}views/img/creditcard.png" alt="{l s='Proceed to payment' mod='begateway'}" id="begateway_img" /></p>
                 <br class="clearfix" />
             </a>
         </div>

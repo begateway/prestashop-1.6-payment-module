@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-	<name>beGateway</name>
-	<displayName><![CDATA[beGateway]]></displayName>
+	<name>begateway</name>
+	<displayName><![CDATA[BeGateway]]></displayName>
 	<version><![CDATA[1.4.0]]></version>
 	<description><![CDATA[Accept online payments]]></description>
 	<author><![CDATA[]]></author>
