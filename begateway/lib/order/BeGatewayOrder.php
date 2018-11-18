@@ -285,6 +285,35 @@ class BeGatewayOrder implements BeGatewayOrderInterface
         return BeGatewayHelper::round($this->getAmount() - $transaction->getRefundedAmount());
     }
 
+    public function canCaptureAmount($amount = 0)
+    {
+        $transaction = $this->getTransaction();
+
+        return $transaction->canBeCaptured() && $amount >= 0 && $this->getMaxCaptureAmount() >= $amount;
+    }
+
+    public function getMaxCaptureAmount()
+    {
+        $transaction = $this->getTransaction();
+
+        return BeGatewayHelper::round($this->getAmount() - $transaction->getCapturedAmount());
+    }
+
+    public function canVoidAmount($amount = 0)
+    {
+        $transaction = $this->getTransaction();
+
+        return $transaction->canBeVoided() && $amount >= 0 && $this->getMaxVoidAmount() >= $amount;
+    }
+
+    public function getMaxVoidAmount()
+    {
+        $transaction = $this->getTransaction();
+
+        return BeGatewayHelper::round($this->getAmount() - $transaction->getVoidAmount());
+    }
+
+
     protected function sumItemsAmount($items)
     {
         $amount = 0;

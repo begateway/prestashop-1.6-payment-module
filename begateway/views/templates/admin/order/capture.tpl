@@ -17,7 +17,7 @@
                 <p>{l s='Send amount to capture' mod='begateway'}</p>
 
                 <p class="center">
-                    <input value="{$max_online_capture_amount|escape:'htmlall':'UTF-8'}" name="BEGATEWA_CAPTURE_AMOUNT" />
+                    <input value="{$max_online_capture_amount|escape:'htmlall':'UTF-8'}" name="BEGATEWAY_CAPTURE_AMOUNT" />
                     <button type="submit" class="btn btn-default" name="submitBeGatewayOnlineCapture"
                             onclick="if (!confirm('{l s='Are you sure?' mod='begateway'}'))return false;">
                         <i class="icon-undo"></i>

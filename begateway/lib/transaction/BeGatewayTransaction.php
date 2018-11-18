@@ -7,9 +7,12 @@
 class BeGatewayTransaction implements BeGatewayTransactionInterface
 {
     protected $order_id;
-    protected $status          = 'new';
+    protected $status = 'new';
+    protected $amount = 0;
     protected $refunded_amount = 0;
+    protected $captured_amount = 0;
     protected $transaction_id;
+    protected $transaction_type;
 
     protected $is_new = true;
 
@@ -34,14 +37,44 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
         return $this->transaction_id;
     }
 
+    public function getTransactionType()
+    {
+        return $this->transaction_type;
+    }
+
     public function getRefundedAmount()
     {
         return $this->refunded_amount;
     }
 
+    public function getCapturedAmount()
+    {
+        return $this->captured_amount;
+    }
+
+    public function getVoidedAmount()
+    {
+        return $this->voided_amount;
+    }
+
+    public function getAmount()
+    {
+        return $this->amount;
+    }
+
     public function canBeRefunded()
     {
-        return $this->isSuccess() || $this->isRefunded();
+        return $this->isSuccess() && !$this->isRefunded() && $this->transaction_type == 'payment';
+    }
+
+    public function canBeCaptured()
+    {
+        return $this->isSuccess() && !$this->isCaptured() && $this->transaction_type == 'authorization';
+    }
+
+    public function canBeVoided()
+    {
+        return $this->isSuccess() && !$this->isVoided() && $this->transaction_type == 'authorization';
     }
 
     public function isSuccess()
@@ -51,7 +84,17 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
 
     public function isRefunded()
     {
-        return $this->isValid() && strcasecmp('refund', $this->type) === 0;
+        return $this->isValid() && ($this->getAmount() == $this->getRefundedAmount());
+    }
+
+    public function isCaptured()
+    {
+        return $this->isValid() && $this->getCapturedAmount() > 0;
+    }
+
+    public function isVoided()
+    {
+        return $this->isValid() && $this->getVoidedAmount() > 0;
     }
 
     public function setTransactionId($transaction_id)
@@ -64,9 +107,9 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
         $this->status = $status;
     }
 
-    public function setType($type)
+    public function setTransactionType($type)
     {
-        $this->type = $type;
+        $this->transaction_type = $type;
     }
 
     public function addRefundedAmount($refunded_amount)
@@ -74,15 +117,33 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
         $this->refunded_amount += $refunded_amount;
     }
 
+    public function addCapturedAmount($captured_amount)
+    {
+        $this->captured_amount = $captured_amount;
+    }
+
+    public function addVoidedAmount($voided_amount)
+    {
+        $this->voided_amount = $voided_amount;
+    }
+
+    public function addAmount($amount)
+    {
+        $this->amount = $amount;
+    }
+
     protected function loadData()
     {
-        $sql  = 'SELECT `id_transaction`, `status`, `refund_amount` FROM `' . _DB_PREFIX_ . 'begateway_transaction` WHERE ' . $this->getWhere();
+        $sql  = 'SELECT * FROM `' . _DB_PREFIX_ . 'begateway_transaction` WHERE ' . $this->getWhere();
         $data = Db::getInstance()->getRow($sql);
         if ($data) {
             $this->transaction_id  = $data['id_transaction'];
             $this->status          = $data['status'];
-            $this->type            = $data['type'];
-            $this->refunded_amount = (float) $data['refund_amount'];
+            $this->transaction_type= $data['type'];
+            $this->amount          = (float) $data['amount'];
+            $this->refunded_amount = (float) $data['refunded_amount'];
+            $this->captured_amount = (float) $data['captured_amount'];
+            $this->voided_amount   = (float) $data['voided_amount'];
             $this->is_new          = false;
         }
     }
@@ -97,8 +158,12 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
         $data = [
             'id_transaction'  => '\'' . pSQL($this->transaction_id) . '\'',
             'status'          => '\'' . pSQL($this->status) . '\'',
-            'type'            => '\'' . pSQL($this->type) . '\'',
-            'refund_amount'   => (float) $this->refunded_amount
+            'amount'          => (float) $this->amount,
+            'refunded_amount' => (float) $this->refunded_amount,
+            'captured_amount' => (float) $this->captured_amount,
+            'voided_amount'   => (float) $this->voided_amount,
+            'type'            => '\'' . pSQL($this->transaction_type) . '\'',
+            'date_upd'        => '\'' . date('Y-m-d H:i:s') . '\'',
         ];
 
         if ($this->is_new) {

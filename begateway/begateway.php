@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author    eComCharge
+ * @copyright Copyright (c) 2016 ecomcharge.com
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
 require_once _PS_MODULE_DIR_ . 'begateway/lib/BeGatewayAutoload.php';
 
 class BeGateway extends PaymentModule
@@ -6,8 +12,8 @@ class BeGateway extends PaymentModule
   const TEST_SHOP   = 361;
   const TEST_KEY    = 'b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d';
   const TEST_DOMAIN = 'checkout.begateway.com';
-  private	$_html = '';
-  private $_postErrors = array();
+  const MIN_AMOUNT  = 0.01;
+
   protected $session;
 
   public function __construct()
@@ -43,15 +49,10 @@ class BeGateway extends PaymentModule
       OR !Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', $this::TEST_DOMAIN)
       OR !Configuration::updateValue('BEGATEWAY_TEST_MODE', '1')
       OR !$this->registerHook('payment')
-      OR !$this->registerHook('backOfficeHeader')
-      OR !$this->registerHook('displayHeader')
+      OR !$this->registerHook('adminOrder')
       OR !$this->installTable()
       OR !$this->createOrderState()) {
         return false;
-    }
-
-    if (_PS_VERSION_ > 1.4 && !$this->registerHook('displayHeader')) {
-      return false;
     }
 
     return true;
@@ -62,15 +63,17 @@ class BeGateway extends PaymentModule
     return Db::getInstance()->Execute('
       CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'begateway_transaction` (
         `id_transaction` varchar(60) NOT NULL,
-        `type` enum(\'payment\',\'refund\',\'authorization\') NOT NULL,
         `id_order` int(10) unsigned NOT NULL,
-        `amount` decimal(10,2) NOT NULL,
+        `type` enum(\'new\',\'payment\', \'authorization\') NOT NULL DEFAULT \'new\',
+        `amount` decimal(10,6) NOT NULL DEFAULT \'0.000000\',
         `status` enum(\'incomplete\',\'failed\',\'successful\', \'pending\') NOT NULL,
-        `currency` varchar(3) NOT NULL,
-        `refund_amount` decimal(10,2),
+        `refunded_amount` decimal(10,6) NOT NULL DEFAULT \'0.000000\',
+        `captured_amount` decimal(10,6) NOT NULL DEFAULT \'0.000000\',
+        `voided_amount` decimal(10,6) NOT NULL DEFAULT \'0.000000\',
         `date_add` datetime NOT NULL,
+  			`date_upd` datetime NOT NULL,
       PRIMARY KEY (`id_transaction`),
-      KEY `idx_transaction` (`type`,`id_order`,`status`)
+      KEY `idx_order` (`id_order`)
     )
     ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8');
   }
@@ -84,8 +87,7 @@ class BeGateway extends PaymentModule
       OR !Configuration::deleteByName('BEGATEWAY_TEST_MODE')
       OR !Db::getInstance()->Execute('DROP TABLE `'._DB_PREFIX_.'begateway_transaction`')
       OR !$this->unregisterHook('payment')
-      OR !$this->unregisterHook('backOfficeHeader')
-      OR !$this->unregisterHook('displayHeader')
+      OR !$this->unregisterHook('adminOrder')
       OR !parent::uninstall())
       return false;
     return true;
@@ -109,14 +111,6 @@ class BeGateway extends PaymentModule
       return $output;
   }
 
-  public function hookdisplayHeader()
-  {
-    if (!$this->active)
-      return;
-
-    $this->context->controller->addCSS(__PS_BASE_URI__.'modules/'.$this->name.'/views/css/front.css');
-  }
-
   public function hookPayment($params)
   {
     if (!$this->active)
@@ -132,134 +126,156 @@ class BeGateway extends PaymentModule
     return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
   }
 
-  public function hookBackOfficeHeader()
+  public function hookAdminOrder($params)
   {
-
-    if (!isset($_GET['vieworder']) || !isset($_GET['id_order'])) return;
-
-    //Capture start
-    if (Tools::isSubmit('Submit_beGateway_Capture') && isset($_POST['id_auth']))
-    {
-      $transaction_details = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'begateway_transaction WHERE id_begateway_transaction = '.(int)$_POST['id_auth'].' AND type = \'authorization\' AND status = \'successful\'');
-
-      if (isset($transaction_details['uid'])){
-        $capture = new \BeGateway\Capture;
-        $capture->setParentUid($transaction_details['uid']);
-        $capture->money->setCurrency($transaction_details['currency']);
-        $capture->money->setAmount($transaction_details['amount']);
-
-        $capture_response = $capture->submit();
-
-        if ($capture_response->isSuccess()){
-          Db::getInstance()->getRow('UPDATE '._DB_PREFIX_.'begateway_transaction SET type = \'payment\', au_uid = \''.$transaction_details['uid'].'\' , uid = \''.$capture_response->getUid().'\' WHERE id_begateway_transaction = '.(int)$_POST['id_auth']);
-        }
+      if (!$this->active) {
+          return;
       }
-    }
-    //Capture end
 
-    if (Tools::isSubmit('Submit_beGateway_Refund') && isset($_POST['begateway_amount_to_refund']) && isset($_POST['id_refund']))
-    {
+      $order  = $this->getOrderById($params['id_order']);
+      $errors = [];
+      $html   = null;
 
-      $transaction_details = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'begateway_transaction WHERE id_begateway_transaction = '.(int)($_POST['id_refund']).' AND type = \'payment\' AND status = \'successful\'');
-
-      if (isset($transaction_details['uid']))
-      {
-
-        $already_refunded = Db::getInstance()->getValue('SELECT SUM(amount) FROM '._DB_PREFIX_.'begateway_transaction WHERE id_order = '.(int)$_GET['id_order'].' AND type = \'refund\' AND status = \'successful\'');
-
-        if ($_POST['begateway_amount_to_refund'] <= number_format($transaction_details['amount'] - $already_refunded, 2, '.', '')){
-
-          $refund = new \BeGateway\Refund;
-          $refund->setParentUid($transaction_details['uid']);
-          $refund->money->setCurrency($transaction_details['currency']);
-          $refund->money->setAmount($_POST['begateway_amount_to_refund']);
-          $refund->setReason($this->l('Order Refund :').$_GET['id_order']);
-
-          $refund_response = $refund->submit();
-
-          if ($refund_response->isSuccess()) {
-            Db::getInstance()->Execute('
-              INSERT INTO '._DB_PREFIX_.'begateway_transaction (type, id_begateway_customer, id_cart, id_order,
-                uid, amount, status, currency, date_add)
-                VALUES (\'refund\', '.(int)$transaction_details['id_begateway_customer'].', '.(int)$transaction_details['id_cart'].', '.
-                (int)$_GET['id_order'].', \''.$refund_response->getUid().'\',
-                  \''.(float)$_POST['begateway_amount_to_refund'].'\', \''.'successful'.'\', \''.$transaction_details['currency'].'\',
-                  NOW())');
+      if (Tools::isSubmit('submitBeGatewayOnlineRefund')) {
+          $amount = BeGatewayHelper::round((float) Tools::getValue('BEGATEWAY_REFUND_AMOUNT', 0));
+          if ($order->canRefundAmount($amount)) {
+              $this->refund($order, $amount);
+          } else {
+              $errors[] = $this->l('This amount cannot be refunded');
           }
+      }
+
+      if (Tools::isSubmit('submitBeGatewayOnlineCapture')) {
+          $amount = BeGatewayHelper::round((float) Tools::getValue('BEGATEWAY_CAPTURE_AMOUNT', 0));
+          if ($order->canCaptureAmount($amount)) {
+              $this->capture($order, $amount);
+          } else {
+              $errors[] = $this->l('This amount cannot be captured');
+          }
+      }
+
+      if (Tools::isSubmit('submitBeGatewayOnlineVoid')) {
+          $amount = BeGatewayHelper::round((float) $order->getMaxVoidAmount());
+          if ($order->canVoidAmount($amount)) {
+              $this->void($order, $amount);
+          } else {
+              $errors[] = $this->l('This amount cannot be voided');
+          }
+      }
+
+      if ($order->canRefundAmount(self::MIN_AMOUNT)) {
+          $this->context->smarty->assign(
+              [
+                  'base_url'                 => _PS_BASE_URL_ . __PS_BASE_URI__,
+                  'params'                   => $params,
+                  'errors'                   => $errors,
+                  'max_online_refund_amount' => $order->getMaxRefundAmount(),
+                  'module_name'              => $this->name,
+              ]
+          );
+
+          $html = $this->display(__FILE__, 'views/templates/admin/order/refund.tpl');
+
+      } elseif ($order->canCaptureAmount(self::MIN_AMOUNT)) {
+          $this->context->smarty->assign(
+              [
+                  'base_url'                 => _PS_BASE_URL_ . __PS_BASE_URI__,
+                  'params'                   => $params,
+                  'errors'                   => $errors,
+                  'max_online_capture_amount'=> $order->getMaxCaptureAmount(),
+                  'module_name'              => $this->name,
+              ]
+          );
+
+          $html = $this->display(__FILE__, 'views/templates/admin/order/capture.tpl');
+
+      } elseif ($order->canVoidAmount(self::MIN_AMOUNT)) {
+          $this->context->smarty->assign(
+              [
+                  'base_url'                 => _PS_BASE_URL_ . __PS_BASE_URI__,
+                  'params'                   => $params,
+                  'errors'                   => $errors,
+                  'module_name'              => $this->name,
+              ]
+          );
+
+          $html = $this->display(__FILE__, 'views/templates/admin/order/void.tpl');
+      }
+
+      return $html;
+  }
+
+  protected function refund($order, $amount)
+  {
+      $transaction = $order->getTransaction();
+      $refund = new \BeGateway\RefundOperation;
+      $refund->setParentUid($transaction->getTransactionId());
+      $refund->money->setCurrency($order->getCurrency());
+      $refund->money->setAmount($amount);
+      $refund->setReason($this->l('Manual order refund :') . $order->getId());
+
+      $response = $refund->submit();
+
+      if ($response->isSuccess()) {
+
+        $transaction->addRefundedAmount($amount);
+        $transaction->save();
+
+        if ($transaction->isRefunded()) {
+          $order->cancel();
         }
 
-        else
-          $this->_errors['refund_error'] = $this->l('You cannot refund more than').' '.Tools::displayPrice($transaction_details['amount'] - $already_refunded).' '.$this->l('on this order');
-      }
-    }
-
-    /* Check if the order was paid with beGateway and display the transaction details */
-    if (Db::getInstance()->getValue('SELECT module FROM '._DB_PREFIX_.'orders WHERE id_order = '.(int)$_GET['id_order']) == $this->name)
-    {
-      /* Get the transaction details */
-      $id_cart = Db::getInstance()->getValue('SELECT id_cart FROM '._DB_PREFIX_.'orders WHERE id_order = '.(int)$_GET['id_order']);
-
-      $transaction_details = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.'begateway_transaction WHERE id_cart = '.(int)$id_cart.' AND ((type = \'payment\') or (type = \'authorization\')) AND status = \'successful\'');
-
-
-      $refunded = 0;
-      $output_refund = '';
-      $refund_details = Db::getInstance()->ExecuteS('SELECT amount, status, date_add, uid FROM '._DB_PREFIX_.'begateway_transaction
-        WHERE id_order = '.(int)$_GET['id_order'].' AND type = \'refund\' ORDER BY date_add DESC');
-      foreach ($refund_details as $refund_detail)
-      {
-        $refunded += ($refund_detail['status'] == 'successful' ? $refund_detail['amount'] : 0);
-        $output_refund .= '<tr'.($refund_detail['status'] != 'successful' ? ' style="background: #FFBBAA;"': '').'><td>'.
-          Tools::safeOutput($refund_detail['date_add']).'</td><td style="text-align: right;">'.Tools::displayPrice($refund_detail['amount']).
-          '</td><td>'.($refund_detail['status'] == 'successful' ? $this->l('Processed') : $this->l('Error')).'</td><td>'.Tools::safeOutput($refund_detail['uid']).'</td></tr>';
-      }
-
-      $output = '
-        <script type="text/javascript">
-        $(document).ready(function() {
-          $(\''. (_PS_VERSION_ < 1.6 ? '' : '<div class="row"><div class="col-lg-12">') . '<fieldset><legend><img src="../img/admin/money.gif" alt="" />'.$this->l('Payment Details').'</legend>';
-
-      if (isset($transaction_details['uid'])){
-        if ($transaction_details['type'] == 'authorization'){
-          $stat_str = $this->l('Status:').' <span style="font-weight: bold; color: '.($transaction_details['status'] == 'successful' ? 'green;">'.$this->l('Authorized') : '#CC0000;">'.$this->l('Unauthorized')).'</span>';
-          $stat_str .= '<form action="" method="post"><input type="hidden" name="id_auth" value="'.
-            Tools::safeOutput($transaction_details['id_begateway_transaction']).'" />
-            <input type="submit" class="btn btn-primary" onclick="return confirm(\\\''.addslashes($this->l('Do you want to capture this transaction?')).'\\\');" name="Submit_beGateway_Capture" value="'.
-            $this->l('Capture this transaction').'" /></form>';
-        } else {
-          $stat_str = $this->l('Status:').' <span style="font-weight: bold; color: '.($transaction_details['status'] == 'successful' ? 'green;">'.$this->l('Paid') : '#CC0000;">'.$this->l('Unpaid')).'</span><br />';
-        }
-        $output .= $this->l('Transaction UID:').' '.Tools::safeOutput($transaction_details['uid']).'<br /><br />'.
-          $stat_str.
-          $this->l('Amount:').' '.Tools::displayPrice($transaction_details['amount']).'<br />'.
-          $this->l('Processed on:').' '.Tools::safeOutput($transaction_details['date_add']).'<br />';
+        $order->addMessage($this->l('Sent online refund request for amount: ') . $amount . '. UID: ' . $response->getUid());
       } else {
-        $output .= '<b style="color: #CC0000;">'.$this->l('Warning:').'</b> '.$this->l('The customer paid and an error occured (check details at the bottom of this page)');
-      }
-      $output .= '</fieldset><br />';
-
-      if (($transaction_details['status'] == 'successful')&&($transaction_details['type'] == 'payment')){
-        $output .= '<fieldset><legend><img src="../img/admin/money.gif" alt="" />'.$this->l('Proceed to a full or partial refund').'</legend>'.
-          ((empty($this->_errors['refund_error']) && isset($_POST['uid_refund'])) ? '<div class="conf confirmation">'.$this->l('Your refund was successfully processed').'</div>' : '').
-          (!empty($this->_errors['refund_error']) ? '<span style="color: #CC0000; font-weight: bold;">'.$this->l('Error:').' '.Tools::safeOutput($this->_errors['refund_error']).'</span><br /><br />' : '').
-          $this->l('Already refunded:').' <b>'.Tools::displayPrice($refunded).'</b><br /><br />'.($refunded ? '<table class="table" cellpadding="0" cellspacing="0" style="font-size: 12px;"><tr><th>'.$this->l('Date').'</th><th>'.$this->l('Amount refunded').'</th><th>'.$this->l('Status').'</th><th>'.$this->l('UID').'</th></tr>'.$output_refund.'</table><br />' : '').
-          ($transaction_details['amount'] > $refunded ? '<form action="" method="post">'.$this->l('Refund:').' <input type="text" value="'.number_format($transaction_details['amount'] - $refunded, 2, '.', '').
-          '" name="begateway_amount_to_refund" style="text-align: right; width: 100px;" /> <input type="hidden" name="id_refund" value="'.
-          Tools::safeOutput($transaction_details['id_begateway_transaction']).'" /><input type="submit" class="btn btn-primary" onclick="return confirm(\\\''.addslashes($this->l('Do you want to proceed to this refund?')).'\\\');" name="Submit_beGateway_Refund" value="'.
-          $this->l('Process Refund').'" /></form>' : '').'</fieldset><br />';
+        $order->addMessage($this->l('Online refund request failed for amount: ') . $amount . '. UID: ' . $response->getUid());
       }
 
-      if (_PS_VERSION_ < 1.6 ) {
-        $output .='\').insertBefore($(\'select[name=id_order_state]\').parent().parent().find(\'fieldset\').first());';
+      Tools::redirect($_SERVER['HTTP_REFERER']);
+  }
+
+  protected function capture($order, $amount) {
+      $capture = new \BeGateway\CaptureOperation;
+      $capture->setParentUid($transaction->getTransactionId());
+      $capture->money->setCurrency($order->getCurrency());
+      $capture->money->setAmount($amount);
+
+      $response = $capture->submit();
+
+      if ($response->isSuccess()) {
+
+        $transaction->setTransactionType('payment');
+        $transaction->addCapturedAmount($amount);
+        $transaction->save();
+
+        $order->addMessage($this->l('Sent online capture request for amount: ') . $amount . '. UID: ' . $response->getUid());
       } else {
-        $output .='</div></div>\').insertBefore($(\'select[name=id_order_state]\').closest(\'.row\'));';
+        $order->addMessage($this->l('Online capture request failed for amount: ') . $amount . '. UID: ' . $response->getUid());
       }
 
-      $output .= '});
-        </script>';
+      Tools::redirect($_SERVER['HTTP_REFERER']);
+  }
 
-      return $output;
-    }
+  protected function void($order, $amount) {
+      $void = new \BeGateway\VoidOperation;
+      $void->setParentUid($transaction->getTransactionId());
+      $void->money->setCurrency($order->getCurrency());
+      $void->money->setAmount($amount);
+
+      $response = $void->submit();
+
+      if ($response->isSuccess()) {
+
+        $order->cancel();
+
+        $transaction->addVoidedAmount($amount);
+        $transaction->save();
+
+        $order->addMessage($this->l('Sent online void request for amount: ') . $amount . '. UID: ' . $response->getUid());
+      } else {
+        $order->addMessage($this->l('Online void request failed for amount: ') . $amount . '. UID: ' . $response->getUid());
+      }
+
+      Tools::redirect($_SERVER['HTTP_REFERER']);
   }
 
   protected function updateConfigurationPost()
@@ -447,5 +463,4 @@ class BeGateway extends PaymentModule
   {
       return $this->session;
   }
-
 }

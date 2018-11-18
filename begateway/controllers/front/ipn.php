@@ -44,6 +44,14 @@ class BeGatewayIpnModuleFrontController extends ModuleFrontController
             'test'            => $webhook->isTest()
         ];
 
+        if ($webhook->getResponse()->transaction->type == 'refund') {
+          $data['refundedAmount'] = $data['amount'];
+        }
+
+        if ($webhook->getResponse()->transaction->type == 'capture') {
+          $data['capturedAmount'] = $data['amount'];
+        }
+
         try {
             $this->ipn->validateIpnAuthorization($webhook);
             $order = $this->module->getOrderById($data['userOrderId']);

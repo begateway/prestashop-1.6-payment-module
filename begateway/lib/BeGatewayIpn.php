@@ -85,28 +85,21 @@ class BeGatewayIpn
 
         $transaction->setTransactionId($transaction_id);
         $transaction->setStatus($state);
-        $transaction->setType($data['transactionType']);
+        $transaction->addAmount($data['amount']);
 
         $message = $data['test'] ? $this->module->l('TEST') : '';
 
-        if ('successful' === $state && ($data['transactionType'] == 'payment' || $data['transactionType'] == 'authorization')) {
+        if ('successful' === $state && $data['transactionType'] == 'payment') {
             $order->complete();
-            $message .= ' '. $this->module->l('BeGateway IPN update: payment complete. Transaction id: ') . $transaction_id;
+            $message .= ' '. $this->module->l('BeGateway IPN update: payment complete. UID: ') . $transaction_id;
             $order->addMessage($message);
-        } elseif ('successful' === $state && $data['transactionType'] == 'void') {
-            $order->cancel();
-            $message .= ' '. $this->module->l('BeGateway IPN update: payment canceled. Transaction id: ') . $transaction_id;
+        } elseif ('successful' === $state && $data['transactionType'] == 'authorization') {
+            $order->complete();
+            $message .= ' '. $this->module->l('BeGateway IPN update: authorization complete. UID: ') . $transaction_id;
             $order->addMessage($message);
         } elseif ('failed' === $state && ($data['transactionType'] == 'payment' || $data['transactionType'] == 'authorization')) {
             $order->cancel();
-            $message .= ' '. $this->module->l('BeGateway IPN update: payment rejected. Transaction id: ') . $transaction_id;
-            $order->addMessage($message);
-        } elseif ('successful' === $state && $data['transactionType'] == 'refund') {
-            $refund = $data['refundedAmount'];
-            $transaction->addRefundedAmount($refund);
-            $order->refund();
-            $message .= ' '. $this->module->l('BeGateway IPN update: payment refunded. Transaction id: ') . $transaction_id;
-            $message .= ' ' . $this->module->l('Refunded amount: ') . $refund;
+            $message .= ' '. $this->module->l('BeGateway IPN update: payment rejected. UID: ') . $transaction_id;
             $order->addMessage($message);
         }
         $transaction->save();
