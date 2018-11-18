@@ -1,3 +1,10 @@
+{*
+ * @author    eComCharge
+ * @copyright Copyright (c) 2016 ecomcharge.com
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *
+*}
+
 {capture name=path}
     {l s='Order confirmed' mod='begateway'}
 {/capture}
