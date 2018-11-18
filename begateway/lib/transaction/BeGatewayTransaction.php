@@ -46,13 +46,12 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
 
     public function isSuccess()
     {
-        return $this->isValid() && strcasecmp('complete', $this->status) === 0;
+        return $this->isValid() && strcasecmp('successful', $this->status) === 0;
     }
 
     public function isRefunded()
     {
-        return $this->isValid() && (strcasecmp('partial_refunded', $this->status) === 0
-            || strcasecmp('refunded', $this->status) === 0);
+        return $this->isValid() && strcasecmp('refund', $this->type) === 0;
     }
 
     public function setTransactionId($transaction_id)
@@ -63,6 +62,11 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
     public function setStatus($status)
     {
         $this->status = $status;
+    }
+
+    public function setType($type)
+    {
+        $this->type = $type;
     }
 
     public function addRefundedAmount($refunded_amount)
@@ -77,6 +81,7 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
         if ($data) {
             $this->transaction_id  = $data['id_transaction'];
             $this->status          = $data['status'];
+            $this->type            = $data['type'];
             $this->refunded_amount = (float) $data['refund_amount'];
             $this->is_new          = false;
         }
@@ -90,8 +95,9 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
     public function save()
     {
         $data = [
-            'uid'             => '\'' . pSQL($this->transaction_id) . '\'',
+            'id_transaction'  => '\'' . pSQL($this->transaction_id) . '\'',
             'status'          => '\'' . pSQL($this->status) . '\'',
+            'type'            => '\'' . pSQL($this->type) . '\'',
             'refund_amount'   => (float) $this->refunded_amount
         ];
 

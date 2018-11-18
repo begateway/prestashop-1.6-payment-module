@@ -82,23 +82,26 @@ class BeGatewayIpn
         $transaction_id = $data['transactionId'];
         $state          = Tools::strtolower($data['status']);
         $transaction    = $order->getTransaction();
+
         $transaction->setTransactionId($transaction_id);
         $transaction->setStatus($state);
+        $transaction->setType($data['transactionType']);
+
         $message = $data['test'] ? $this->module->l('TEST') : '';
 
-        if ('successful' === $state && ($data['type'] == 'payment' || $data['type'] == 'authorization')) {
+        if ('successful' === $state && ($data['transactionType'] == 'payment' || $data['transactionType'] == 'authorization')) {
             $order->complete();
             $message .= ' '. $this->module->l('BeGateway IPN update: payment complete. Transaction id: ') . $transaction_id;
             $order->addMessage($message);
-        } elseif ('successful' === $state && $data['type'] == 'void') {
+        } elseif ('successful' === $state && $data['transactionType'] == 'void') {
             $order->cancel();
             $message .= ' '. $this->module->l('BeGateway IPN update: payment canceled. Transaction id: ') . $transaction_id;
             $order->addMessage($message);
-        } elseif ('failed' === $state && ($data['type'] == 'payment' || $data['type'] == 'authorization')) {
+        } elseif ('failed' === $state && ($data['transactionType'] == 'payment' || $data['transactionType'] == 'authorization')) {
             $order->cancel();
             $message .= ' '. $this->module->l('BeGateway IPN update: payment rejected. Transaction id: ') . $transaction_id;
             $order->addMessage($message);
-        } elseif ('successful' === $state && $data['type'] == 'refund') {
+        } elseif ('successful' === $state && $data['transactionType'] == 'refund') {
             $refund = $data['refundedAmount'];
             $transaction->addRefundedAmount($refund);
             $order->refund();
