@@ -18,7 +18,6 @@
 {if isset($nbProducts) && $nbProducts <= 0}
     <p class="warning">{l s='Shopping cart is empty.' mod='begateway'}</p>
 {else}
-  <img src="{$begateway_path|escape:'htmlall':'UTF-8'}views/img/creditcard.png" alt="{l s='Pay' mod='begateway'}"/>
   <form action="{$controller_link|escape:'htmlall':'UTF-8'}" method="post">
       <p>
           {l s='You have chosen to pay online.' mod='begateway'}
@@ -27,7 +26,7 @@
       </p>
 
       <p>
-          <strong>{l s='To confirm and pay your order click the Checkout Button below' mod='begateway'}</strong>
+          <strong>{l s='To confirm and pay your order click the Pay button below' mod='begateway'}</strong>
       </p>
 
       <p class="cart_navigation" id="cart_navigation">

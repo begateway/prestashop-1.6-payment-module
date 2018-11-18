@@ -50,7 +50,7 @@ class BeGatewayGateway
           $transaction->setPaymentTransactionType();
         }
 
-        $transaction->setTestMode(Configuration::get('BEGATEWAY_TEST_MODE') == '1');
+        $transaction->setTestMode(intval(Configuration::get('BEGATEWAY_TEST_MODE')) == 1);
         error_log(Configuration::get('BEGATEWAY_TEST_MODE'));
 
         $state_val = NULL;
@@ -87,6 +87,26 @@ class BeGatewayGateway
         $transaction->customer->setState($state_val);
 
         $paymentUrl = null;
+
+        if (Configuration::get('BEGATEWAY_VISA') ||
+            Configuration::get('BEGATEWAY_MASTERCARD') ||
+            Configuration::get('BEGATEWAY_BELKART')) {
+
+          $transaction->addPaymentMethod(new \BeGateway\PaymentMethod\CreditCard);
+        }
+
+        if (Configuration::get('BEGATEWAY_HALVA')) {
+          $transaction->addPaymentMethod(new \BeGateway\PaymentMethod\CreditCardHalva);
+        }
+
+        if (Configuration::get('BEGATEWAY_ERIP')) {
+          $transaction->addPaymentMethod(new \BeGateway\PaymentMethod\Erip(
+            array(
+                'order_id' => $order->getId(),
+                'account_number' => strval($order->getId())
+            )
+          ));
+        }
 
         try {
           $response = $transaction->submit();

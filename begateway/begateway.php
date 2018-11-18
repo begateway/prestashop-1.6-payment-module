@@ -35,7 +35,7 @@ class BeGateway extends PaymentModule
 
     $this->page = basename(__FILE__, '.php');
     $this->displayName = $this->l('BeGateway');
-    $this->description = $this->l('Accepts online payments');
+    $this->description = $this->l('Accept online payments');
     $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
     $this->session = new BeGatewaySession($this->context);
   }
@@ -47,12 +47,21 @@ class BeGateway extends PaymentModule
       OR !Configuration::updateValue('BEGATEWAY_SHOP_PASS', $this::TEST_KEY)
       OR !Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', '')
       OR !Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', $this::TEST_DOMAIN)
-      OR !Configuration::updateValue('BEGATEWAY_TEST_MODE', '1')
+      OR !Configuration::updateValue('BEGATEWAY_TEST_MODE', 1)
+      OR !Configuration::updateValue('BEGATEWAY_VISA', 1)
+      OR !Configuration::updateValue('BEGATEWAY_MASTERCARD', 1)
+      OR !Configuration::updateValue('BEGATEWAY_BELKART', 0)
+      OR !Configuration::updateValue('BEGATEWAY_HALVA', 0)
+      OR !Configuration::updateValue('BEGATEWAY_ERIP', 0)
       OR !$this->registerHook('payment')
       OR !$this->registerHook('adminOrder')
       OR !$this->installTable()
       OR !$this->createOrderState()) {
         return false;
+    }
+
+    if (_PS_VERSION_ > 1.4 && !$this->registerHook('displayHeader')) {
+      return false;
     }
 
     return true;
@@ -85,9 +94,15 @@ class BeGateway extends PaymentModule
       OR !Configuration::deleteByName('BEGATEWAY_SHOP_PAYTYPE')
       OR !Configuration::deleteByName('BEGATEWAY_DOMAIN_CHECKOUT')
       OR !Configuration::deleteByName('BEGATEWAY_TEST_MODE')
+      OR !Configuration::deleteByName('BEGATEWAY_VISA')
+      OR !Configuration::deleteByName('BEGATEWAY_ERIP')
+      OR !Configuration::deleteByName('BEGATEWAY_HALVA')
+      OR !Configuration::deleteByName('BEGATEWAY_BELKART')
+      OR !Configuration::deleteByName('BEGATEWAY_MASTERCARD')
       OR !Db::getInstance()->Execute('DROP TABLE `'._DB_PREFIX_.'begateway_transaction`')
       OR !$this->unregisterHook('payment')
       OR !$this->unregisterHook('adminOrder')
+      OR !$this->unregisterHook('displayHeader')
       OR !parent::uninstall())
       return false;
     return true;
@@ -111,6 +126,17 @@ class BeGateway extends PaymentModule
       return $output;
   }
 
+  public function hookdisplayHeader()
+  {
+    if (!$this->active)
+      return;
+
+    $this->context->controller->addCSS($this->getPathUri() . 'views/css/begateway.css');
+
+    if (_PS_VERSION_ < 1.6)
+      $this->context->controller->addCSS($this->getPathUri() . 'views/css/begateway_1_5.css');
+  }
+
   public function hookPayment($params)
   {
     if (!$this->active)
@@ -119,7 +145,8 @@ class BeGateway extends PaymentModule
     $this->context->smarty->assign(
       [
         'begateway_path' => $this->getPathUri(),
-        'contoller_link' => BeGatewayHelper::controllerLink('payment')
+        'contoller_link' => BeGatewayHelper::controllerLink('payment'),
+        'images'         => $this->getPaymentMethodNames()
       ]
     );
 
@@ -285,6 +312,11 @@ class BeGateway extends PaymentModule
       Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', trim(Tools::getValue('BEGATEWAY_DOMAIN_CHECKOUT')));
       Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', trim(Tools::getValue('BEGATEWAY_SHOP_PAYTYPE')));
       Configuration::updateValue('BEGATEWAY_TEST_MODE', (trim(Tools::getValue('BEGATEWAY_TEST_MODE'))));
+      Configuration::updateValue('BEGATEWAY_VISA', (trim(Tools::getValue('BEGATEWAY_VISA'))));
+      Configuration::updateValue('BEGATEWAY_MASTERCARD', (trim(Tools::getValue('BEGATEWAY_MASTERCARD'))));
+      Configuration::updateValue('BEGATEWAY_BELKART', (trim(Tools::getValue('BEGATEWAY_BELKART'))));
+      Configuration::updateValue('BEGATEWAY_HALVA', (trim(Tools::getValue('BEGATEWAY_HALVA'))));
+      Configuration::updateValue('BEGATEWAY_ERIP', (trim(Tools::getValue('BEGATEWAY_ERIP'))));
   }
 
   protected function displayForm()
@@ -321,37 +353,123 @@ class BeGateway extends PaymentModule
                   'required' => true,
               ],
               [
-                  'type'   => 'radio',
+                  'type'   => 'select',
                   'label'  => $this->l('Transaction type'),
                   'name'   => 'BEGATEWAY_SHOP_PAYTYPE',
+                  'options' => array(
+                    'query' => array(
+                      array('id' => 'payment', 'name' => $this->l('Payment')),
+                      array('id' => 'authorization', 'name' => $this->l('Authorization'))
+                    ),
+                    'name' => 'name',
+                    'id' => 'id'
+                  ),
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'switch',
+                  'label'  => $this->l('Test mode'),
+                  'name'   => 'BEGATEWAY_TEST_MODE',
                   'values' => [
                       [
-                          'id'    => 'begateway_transaction_payment',
-                          'value' => 'payment',
-                          'label' => $this->l('Payment'),
+                          'id'    => 'active_on',
+                          'value' => 1,
+                          'label' => $this->l('Yes'),
                       ],
                       [
-                          'id'    => 'begateway_transaction_authorization',
-                          'value' => 'authorization',
-                          'label' => $this->l('Authorization'),
+                          'id'    => 'active_off',
+                          'value' => 0,
+                          'label' => $this->l('No'),
                       ],
                   ],
                   'required' => true,
               ],
               [
-                  'type'   => 'radio',
-                  'label'  => $this->l('Test mode'),
-                  'name'   => 'BEGATEWAY_TEST_MODE',
+                  'type'   => 'switch',
+                  'label'  => $this->l('Enable VISA'),
+                  'name'   => 'BEGATEWAY_VISA',
                   'values' => [
                       [
-                          'id'    => 'begateway_test_mode',
-                          'value' => '1',
-                          'label' => $this->l('Enabled'),
+                          'id'    => 'active_on',
+                          'value' => 1,
+                          'label' => $this->l('Yes'),
                       ],
                       [
-                          'id'    => 'begateway_production_mode',
-                          'value' => '',
-                          'label' => $this->l('Disabled'),
+                          'id'    => 'active_off',
+                          'value' => 0,
+                          'label' => $this->l('No'),
+                      ],
+                  ],
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'switch',
+                  'label'  => $this->l('Enable Mastercard'),
+                  'name'   => 'BEGATEWAY_MASTERCARD',
+                  'values' => [
+                      [
+                          'id'    => 'active_on',
+                          'value' => 1,
+                          'label' => $this->l('Yes'),
+                      ],
+                      [
+                          'id'    => 'active_off',
+                          'value' => 0,
+                          'label' => $this->l('No'),
+                      ],
+                  ],
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'switch',
+                  'label'  => $this->l('Enable BELKART'),
+                  'name'   => 'BEGATEWAY_BELKART',
+                  'values' => [
+                      [
+                          'id'    => 'active_on',
+                          'value' => 1,
+                          'label' => $this->l('Yes'),
+                      ],
+                      [
+                          'id'    => 'active_off',
+                          'value' => 0,
+                          'label' => $this->l('No'),
+                      ],
+                  ],
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'switch',
+                  'label'  => $this->l('Enable Halva'),
+                  'name'   => 'BEGATEWAY_HALVA',
+                  'values' => [
+                      [
+                          'id'    => 'active_on',
+                          'value' => 1,
+                          'label' => $this->l('Yes'),
+                      ],
+                      [
+                          'id'    => 'active_off',
+                          'value' => 0,
+                          'label' => $this->l('No'),
+                      ],
+                  ],
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'switch',
+                  'label'  => $this->l('Enable ERIP'),
+                  'name'   => 'BEGATEWAY_ERIP',
+                  'values' => [
+                      [
+                          'id'    => 'active_on',
+                          'value' => 1,
+                          'label' => $this->l('Yes'),
+                      ],
+                      [
+                          'id'    => 'active_off',
+                          'value' => 0,
+                          'label' => $this->l('No'),
                       ],
                   ],
                   'required' => true,
@@ -397,6 +515,11 @@ class BeGateway extends PaymentModule
       $helper->fields_value['BEGATEWAY_DOMAIN_CHECKOUT'] = Configuration::get('BEGATEWAY_DOMAIN_CHECKOUT');
       $helper->fields_value['BEGATEWAY_SHOP_PAYTYPE']    = Configuration::get('BEGATEWAY_SHOP_PAYTYPE');
       $helper->fields_value['BEGATEWAY_TEST_MODE']       = Configuration::get('BEGATEWAY_TEST_MODE');
+      $helper->fields_value['BEGATEWAY_VISA']            = Configuration::get('BEGATEWAY_VISA');
+      $helper->fields_value['BEGATEWAY_MASTERCARD']      = Configuration::get('BEGATEWAY_MASTERCARD');
+      $helper->fields_value['BEGATEWAY_BELKART']         = Configuration::get('BEGATEWAY_BELKART');
+      $helper->fields_value['BEGATEWAY_HALVA']           = Configuration::get('BEGATEWAY_HALVA');
+      $helper->fields_value['BEGATEWAY_ERIP']            = Configuration::get('BEGATEWAY_ERIP');
 
       return $helper->generateForm($fieldsForm);
   }
@@ -462,5 +585,18 @@ class BeGateway extends PaymentModule
   public function getSession()
   {
       return $this->session;
+  }
+
+  public function getPaymentMethodNames() {
+    $available_methods = ['VISA', 'MASTERCARD', 'BELKART', 'HALVA', 'ERIP'];
+    $methods = [];
+
+    foreach ($available_methods as $method) {
+      if (Configuration::get("BEGATEWAY_{$method}")) {
+        $methods[]=$method;
+      }
+    }
+
+    return $methods;
   }
 }
