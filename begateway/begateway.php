@@ -44,8 +44,7 @@ class BeGateway extends PaymentModule
       OR !Configuration::updateValue('BEGATEWAY_TEST_MODE', '1')
       OR !$this->registerHook('payment')
       OR !$this->registerHook('backOfficeHeader')
-      OR !$this->registerHook('paymentReturn')
-      OR !$this->registerHook('orderConfirmation')
+      OR !$this->registerHook('displayHeader')
       OR !$this->installTable()
       OR !$this->createOrderState()) {
         return false;
@@ -62,24 +61,18 @@ class BeGateway extends PaymentModule
   {
     return Db::getInstance()->Execute('
       CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'begateway_transaction` (
-        `id_begateway_transaction` int(11) NOT NULL AUTO_INCREMENT,
+        `id_transaction` varchar(60) NOT NULL,
         `type` enum(\'payment\',\'refund\',\'authorization\') NOT NULL,
-        `id_begateway_customer` int(10) unsigned NOT NULL,
-        `id_cart` int(10) unsigned NOT NULL,
         `id_order` int(10) unsigned NOT NULL,
-        `uid` varchar(60) NOT NULL,
         `amount` decimal(10,2) NOT NULL,
         `status` enum(\'incomplete\',\'failed\',\'successful\', \'pending\') NOT NULL,
         `currency` varchar(3) NOT NULL,
-        `id_refund` varchar(32) ,
         `refund_amount` decimal(10,2),
-        `au_uid` varchar(60),
-        `token` varchar(100),
         `date_add` datetime NOT NULL,
-      PRIMARY KEY (`id_begateway_transaction`),
+      PRIMARY KEY (`id_transaction`),
       KEY `idx_transaction` (`type`,`id_order`,`status`)
     )
-    ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
+    ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8');
   }
 
   public function uninstall()
@@ -93,8 +86,6 @@ class BeGateway extends PaymentModule
       OR !$this->unregisterHook('payment')
       OR !$this->unregisterHook('backOfficeHeader')
       OR !$this->unregisterHook('displayHeader')
-      OR !$this->unregisterHook('paymentReturn')
-      OR !$this->unregisterHook('orderConfirmation')
       OR !parent::uninstall())
       return false;
     return true;
@@ -102,64 +93,20 @@ class BeGateway extends PaymentModule
 
   public function getContent()
   {
-    $this->_html = '<h2>BeGateway</h2>';
-    if (isset($_POST['submit_begateway']))
-    {
-      if (empty($_POST['shop_id']))
-        $this->_postErrors[] = $this->l('Shop Id is required.');
-      if (empty($_POST['shop_pass']))
-        $this->_postErrors[] = $this->l('Shop secret key is required.');
-
-      if (empty($_POST['domain_checkout']))
-        $this->_postErrors[] = $this->l('Checkout page domain is required.');
-      if (!sizeof($this->_postErrors))
-      {
-        Configuration::updateValue('BEGATEWAY_SHOP_ID', strval($_POST['shop_id']));
-        Configuration::updateValue('BEGATEWAY_SHOP_PASS', strval($_POST['shop_pass']));
-        Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', strval($_POST['payment_type']));
-        Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', strval($_POST['domain_checkout']));
-        Configuration::updateValue('BEGATEWAY_TEST_MODE', strval($_POST['test_mode']));
-        $this->displayConf();
+      if (Tools::isSubmit('submit' . $this->name)) {
+          $this->updateConfigurationPost();
       }
-      else
-        $this->displayErrors();
-    }
 
-    $this->displaybeGateway();
-    $this->displayFormSettings();
-    return $this->_html;
-  }
+      $data       = [
+          'base_url'    => _PS_BASE_URL_ . __PS_BASE_URI__,
+          'module_name' => $this->name,
+          'form'        => $this->displayForm(),
+      ];
 
-  public function displayConf()
-  {
-    $this->_html .= '
-      <div class="conf confirm">
-      <img src="../img/admin/ok.gif" alt="'.$this->l('Confirmation').'" />
-      '.$this->l('Settings updated').'
-      </div>';
-  }
+      $this->context->smarty->assign($data);
+      $output = $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
 
-  public function displayErrors()
-  {
-    $nbErrors = sizeof($this->_postErrors);
-    $this->_html .= '
-      <div class="alert error">
-      <h3>'.($nbErrors > 1 ? $this->l('There are') : $this->l('There is')).' '.$nbErrors.' '.($nbErrors > 1 ? $this->l('errors') : $this->l('error')).'</h3>
-      <ol>';
-    foreach ($this->_postErrors AS $error)
-      $this->_html .= '<li>'.$error.'</li>';
-    $this->_html .= '
-      </ol>
-      </div>';
-  }
-
-  public function displaybeGateway()
-  {
-    $this->_html .= '
-      <img src="../modules/'.$this->name.'/views/img/admin_logo.png" style="float:left; margin-right:15px;" />
-      <b>'.$this->l('This module allows you to accept online payments.').'</b><br /><br />
-      '.$this->l('You need to configure your account with your payment processor first before using this module.').'
-      <div style="clear:both;">&nbsp;</div>';
+      return $output;
   }
 
   public function hookdisplayHeader()
@@ -168,63 +115,6 @@ class BeGateway extends PaymentModule
       return;
 
     $this->context->controller->addCSS(__PS_BASE_URI__.'modules/'.$this->name.'/views/css/front.css');
-  }
-
-  public function displayFormSettings()
-  {
-    $conf = Configuration::getMultiple(array('BEGATEWAY_SHOP_ID', 'BEGATEWAY_SHOP_PASS', 'BEGATEWAY_SHOP_PAYTYPE', 'BEGATEWAY_DOMAIN_CHECKOUT', 'BEGATEWAY_TEST_MODE'));
-    $shop_id = array_key_exists('shop_id', $_POST) ? $_POST['shop_id'] : (array_key_exists('BEGATEWAY_SHOP_ID', $conf) ? $conf['BEGATEWAY_SHOP_ID'] : '');
-    $shop_pass = array_key_exists('shop_pass', $_POST) ? $_POST['shop_pass'] : (array_key_exists('BEGATEWAY_SHOP_PASS', $conf) ? $conf['BEGATEWAY_SHOP_PASS'] : '');
-    $shop_ptype = array_key_exists('payment_type', $_POST) ? $_POST['payment_type'] : (array_key_exists('BEGATEWAY_SHOP_PAYTYPE', $conf) ? $conf['BEGATEWAY_SHOP_PAYTYPE'] : '');
-    $domain_checkout = array_key_exists('domain_checkout', $_POST) ? $_POST['domain_checkout'] : (array_key_exists('BEGATEWAY_DOMAIN_CHECKOUT', $conf) ? $conf['BEGATEWAY_DOMAIN_CHECKOUT'] : '');
-    $test_mode = array_key_exists('test_mode', $_POST) ? $_POST['test_mode'] : (array_key_exists('BEGATEWAY_TEST_MODE', $conf) ? $conf['BEGATEWAY_TEST_MODE'] : '');
-    $achk_str = '';
-    $pchk_str = '';
-
-    if ($shop_ptype == 'authorization') {
-      $achk_str = 'checked=checked';
-    } else {
-      $pchk_str = 'checked=checked';
-    }
-
-    if ($test_mode == '1') {
-      $m1chk_str = 'checked=checked';
-    } else {
-      $m2chk_str = 'checked=checked';
-    }
-
-    $lang_select = 'selected="selected"';
-
-
-    $this->_html .= '
-      <form action="'.$_SERVER['REQUEST_URI'].'" method="post" style="clear: both;">
-        <fieldset>
-          <legend><img src="../img/admin/contact.gif" />'.$this->l('Settings').'</legend>
-          <label>'.$this->l('Shop Id').'</label>
-          <div class="margin-form"><input type="text" size="33" name="shop_id" value="'.htmlentities($shop_id, ENT_COMPAT, 'UTF-8').'" /></div>
-          <label>'.$this->l('Shop secret key').'</label>
-          <div class="margin-form"><input type="text" size="82" name="shop_pass" value="'.htmlentities($shop_pass, ENT_COMPAT, 'UTF-8').'" />
-          </div>
-          <label>'.$this->l('Payment Type').'</label>
-          <div class="margin-form">
-            <input type="radio" name="payment_type" value="payment" '.$pchk_str.'  /> '.$this->l('Payment').'  &nbsp;&nbsp;
-            <input type="radio" name="payment_type" value="authorization" '.$achk_str.' /> ' . $this->l('Authorization') .'
-          </div>
-          <label>'.$this->l('Checkout page domain').'</label>
-          <div class="margin-form"><input type="text" size="82" name="domain_checkout" value="'.htmlentities($domain_checkout, ENT_COMPAT, 'UTF-8').'" />
-          </div>
-          <label>'.$this->l('Test mode').'</label>
-          <div class="margin-form">
-            <input type="radio" name="test_mode" value="1" '.$m1chk_str.'  /> '.$this->l('Enabled').'  &nbsp;&nbsp;
-            <input type="radio" name="test_mode" value="" '.$m2chk_str.' /> ' . $this->l('Disabled') .'
-          </div>
-
-          <br /><br /><br />
-
-          <br /><center><input type="submit" name="submit_begateway" value="'.$this->l('Update settings').'" class="button" /></center>
-        </fieldset>
-      </form>
-      ';
   }
 
   public function hookPayment($params)
@@ -372,59 +262,127 @@ class BeGateway extends PaymentModule
     }
   }
 
-  public function hookPaymentReturn($params)
+  protected function updateConfigurationPost()
   {
-    if (!$this->active) return;
-
-    return $this->display(__FILE__, 'confirmation.tpl');
+      Configuration::updateValue('BEGATEWAY_SHOP_ID', trim(Tools::getValue('BEGATEWAY_SHOP_ID')));
+      Configuration::updateValue('BEGATEWAY_SHOP_PASS', trim(Tools::getValue('BEGATEWAY_SHOP_PASS')));
+      Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', trim(Tools::getValue('BEGATEWAY_DOMAIN_CHECKOUT')));
+      Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', trim(Tools::getValue('BEGATEWAY_SHOP_PAYTYPE')));
+      Configuration::updateValue('BEGATEWAY_TEST_MODE', (trim(Tools::getValue('BEGATEWAY_TEST_MODE'))));
   }
 
-  public function addOrderMessage($obj_order, $message) {
-    $msg = new Message();
-    $message = strip_tags($message, '<br>');
-    if (Validate::isCleanHtml($message)) {
-      $msg->message = $message;
-      $msg->id_order = $obj_order->id;
-      $msg->private = 1;
-      $msg->add();
-    }
-  }
-
-  /**
- * Change order status
- *
- * @param $obj_order
- * @param $id_status
- * @param $errors
- */
-  public function changeOrderStatus($obj_order, $id_status)
+  protected function displayForm()
   {
-    // Create new OrderHistory
-    $history = new OrderHistory();
-    $history->id_order = $obj_order->id;
-    $history->changeIdOrderState($id_status, (int)$obj_order->id);
+      $fieldsForm = [];
 
-    $template_vars = array();
-    // Save all changes
-    if ($history->addWithemail(true, $template_vars))
-    {
-      // synchronizes quantities if needed..
-      if (Configuration::get('PS_ADVANCED_STOCK_MANAGEMENT'))
-      {
-        foreach ($obj_order->getProducts() as $product)
-        {
-          if (StockAvailable::dependsOnStock($product['product_id']))
-            StockAvailable::synchronize($product['product_id'], (int)$product['id_shop']);
-        }
-      }
-    }
-    else {
-      Logger::addLog('Error to update order status',4);
-    }
-  }
-  public function changeOrderStatusWithMessage($obj_order, $status, $message) {
-    $this->changeOrderStatus($obj_order, $status);
-    $this->addOrderMessage($obj_order, $message);
+      $defaultLang = (int) Configuration::get('PS_LANG_DEFAULT');
+
+      $fieldsForm[0]['form'] = [
+          'legend' => [
+              'title' => $this->l('Configuration'),
+              'icon'  => 'icon-cogs',
+          ],
+          'input' => [
+              [
+                  'type'     => 'text',
+                  'label'    => $this->l('Shop Id'),
+                  'name'     => 'BEGATEWAY_SHOP_ID',
+                  'size'     => 20,
+                  'required' => true,
+              ],
+              [
+                  'type'     => 'text',
+                  'label'    => $this->l('Shop secret key'),
+                  'name'     => 'BEGATEWAY_SHOP_PASS',
+                  'size'     => 20,
+                  'required' => true,
+              ],
+              [
+                  'type'     => 'text',
+                  'label'    => $this->l('Checkout page domain'),
+                  'name'     => 'BEGATEWAY_DOMAIN_CHECKOUT',
+                  'size'     => 20,
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'radio',
+                  'label'  => $this->l('Transaction type'),
+                  'name'   => 'BEGATEWAY_SHOP_PAYTYPE',
+                  'values' => [
+                      [
+                          'id'    => 'begateway_transaction_payment',
+                          'value' => 'payment',
+                          'label' => $this->l('Payment'),
+                      ],
+                      [
+                          'id'    => 'begateway_transaction_authorization',
+                          'value' => 'authorization',
+                          'label' => $this->l('Authorization'),
+                      ],
+                  ],
+                  'required' => true,
+              ],
+              [
+                  'type'   => 'radio',
+                  'label'  => $this->l('Test mode'),
+                  'name'   => 'BEGATEWAY_TEST_MODE',
+                  'values' => [
+                      [
+                          'id'    => 'begateway_test_mode',
+                          'value' => '1',
+                          'label' => $this->l('Enabled'),
+                      ],
+                      [
+                          'id'    => 'begateway_production_mode',
+                          'value' => '',
+                          'label' => $this->l('Disabled'),
+                      ],
+                  ],
+                  'required' => true,
+              ],
+          ],
+          'submit' => [
+              'title' => $this->l('Save'),
+              'class' => 'btn btn-default pull-right',
+          ],
+      ];
+
+      $index = AdminController::$currentIndex;
+
+      $helper = new HelperForm();
+
+      $helper->module          = $this;
+      $helper->name_controller = $this->name;
+      $helper->token           = Tools::getAdminTokenLite('AdminModules');
+      $helper->currentIndex    = $index . '&configure=' . $this->name;
+
+      $helper->default_form_language    = $defaultLang;
+      $helper->allow_employee_form_lang = $defaultLang;
+
+      $helper->title          = $this->displayName;
+      $helper->show_toolbar   = true;
+      $helper->toolbar_scroll = true;
+      $helper->submit_action  = 'submit' . $this->name;
+
+      $helper->toolbar_btn = [
+          'save' => [
+                  'desc' => $this->l('Save'),
+                  'href' => $index . '&configure=' . $this->name . '&save' . $this->name .
+                      '&token=' . Tools::getAdminTokenLite('AdminModules'),
+              ],
+          'back' => [
+              'href' => $index . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+              'desc' => $this->l('Back to list'),
+          ],
+      ];
+
+      $helper->fields_value['BEGATEWAY_SHOP_ID']         = Configuration::get('BEGATEWAY_SHOP_ID');
+      $helper->fields_value['BEGATEWAY_SHOP_PASS']       = Configuration::get('BEGATEWAY_SHOP_PASS');
+      $helper->fields_value['BEGATEWAY_DOMAIN_CHECKOUT'] = Configuration::get('BEGATEWAY_DOMAIN_CHECKOUT');
+      $helper->fields_value['BEGATEWAY_SHOP_PAYTYPE']    = Configuration::get('BEGATEWAY_SHOP_PAYTYPE');
+      $helper->fields_value['BEGATEWAY_TEST_MODE']       = Configuration::get('BEGATEWAY_TEST_MODE');
+
+      return $helper->generateForm($fieldsForm);
   }
 
   protected function createOrderState()
