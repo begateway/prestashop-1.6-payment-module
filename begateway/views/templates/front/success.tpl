@@ -10,7 +10,7 @@
      data-update-url="{$status_link|escape:'htmlall':'UTF-8'}"
      data-order-id="{$order_id|intval}">
     <div id="begateway__loading" class="begateway__loading">
-        <img class="begateway__loading-image" src="{$begateway_path|escape:'htmlall':'UTF-8'}views/img/spinner-icon-0.gif"
+        <img class="begateway__loading-image" src="{$begateway_path|escape:'htmlall':'UTF-8'}views/img/img-loader.gif"
              alt="{l s='Please wait' mod='begateway'}"/>
 
         <p>{l s='Waiting for payment status update...' mod='begateway'}</p>
