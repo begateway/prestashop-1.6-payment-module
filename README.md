@@ -5,19 +5,19 @@
 ## Install module
 
   * Backup your webstore and database
-  * Download [begateway.zip](https://github.com/begateway/prestashop-payment-module/raw/master/begateway.zip)
+  * Download [begateway.zip](/raw/master/begateway.zip)
   * Login to your PrestaShop admin area and select the _Modules_ menu
   * Click _Add a new module_
 
-![Add a new module](https://github.com/begateway/prestashop-payment-module/raw/master/doc/add-module-button.png)
+![Add a new module](/raw/master/doc/add-module-button.png)
 
   * Upload the archive _begateway.zip_ via a module installer
 
-![Upload a new module](https://github.com/begateway/prestashop-payment-module/raw/master/doc/add-module-file.png)
+![Upload a new module](/raw/master/doc/add-module-file.png)
 
   * Locate _BeGateway_ in available modules and install it
 
-![Install module](https://github.com/begateway/prestashop-payment-module/raw/master/doc/add-module-install.png)
+![Install module](/raw/master/doc/add-module-install.png)
 
 ## Module configuration
 
@@ -28,7 +28,7 @@ At the payment module configuration page:
   * Disable or enable the module test mode.
   * Enable payment methods you want to accept payments with.
 
-![Configure module](https://github.com/begateway/prestashop-payment-module/raw/master/doc/config-module.png)
+![Configure module](/raw/master/doc/config-module.png)
 
 ## You are done!
 
@@ -71,19 +71,19 @@ Issue pull requests or send feature requests.
 ## Установка модуля
 
   * Создайте резервную копию вашего магазина и базы данных
-  * Скачайте архив модуля [begateway.zip](https://github.com/begateway/prestashop-payment-module/raw/master/begateway.zip)
+  * Скачайте архив модуля [begateway.zip](/raw/master/begateway.zip)
   * Зайдите в зону администратора магазина и выберете меню _Модули_
   * Нажмите _Добавить модуль_
 
-![Добавить модуль](https://github.com/begateway/prestashop-payment-module/raw/master/doc/add-module-button-ru.png)
+![Добавить модуль](/raw/master/doc/add-module-button-ru.png)
 
   * Загрузите модуль _begateway.zip_ через _ДОБАВИТЬ МОДУЛЬ_
 
-![Загрузить модуль](https://github.com/begateway/prestashop-payment-module/raw/master/doc/add-module-file-ru.png)
+![Загрузить модуль](/raw/master/doc/add-module-file-ru.png)
 
   * Найдите модуль _BeGateway_ в списке модулей и установите его
 
-![Установить модуль](https://github.com/begateway/prestashop-payment-module/raw/master/doc/add-module-install.png)
+![Установить модуль](/raw/master/doc/add-module-install.png)
 
 ## Настройка магазина
 
@@ -94,7 +94,7 @@ Issue pull requests or send feature requests.
   * Включите или выключите тестовый режим работы модуля
   * Выберете способы оплаты, которыми хотите принимать платежи
 
-![Настройка модуля](https://github.com/begateway/prestashop-payment-module/raw/master/doc/config-module.png)
+![Настройка модуля](/raw/master/doc/config-module.png)
 
 ## Готово!
 
