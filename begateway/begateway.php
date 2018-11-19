@@ -588,15 +588,19 @@ class BeGateway extends PaymentModule
   }
 
   public function getPaymentMethodNames() {
-    $available_methods = ['VISA', 'MASTERCARD', 'BELKART', 'HALVA', 'ERIP'];
     $methods = [];
 
-    foreach ($available_methods as $method) {
+    foreach ($this->getSupportedPaymentMethods() as $method) {
       if (Configuration::get("BEGATEWAY_{$method}")) {
         $methods[]=$method;
       }
     }
 
+    return $methods;
+  }
+
+  public function getSupportedPaymentMethods() {
+    $methods = ['VISA', 'MASTERCARD', 'BELKART', 'HALVA', 'ERIP'];
     return $methods;
   }
 }
