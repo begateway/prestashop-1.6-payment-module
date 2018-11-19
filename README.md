@@ -45,6 +45,7 @@ You can use the following information to adjust the payment method in test mode:
   * __Shop ID:__ 361
   * __Shop Key:__ b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d
   * __Checkout page domain:__ checkout.begateway.com
+  * __Gateway page domain:__ demo-gateway.begateway.com
 
 Use the following test card to make successful test payment:
 
@@ -111,6 +112,7 @@ Issue pull requests or send feature requests.
   * __Идентификационный номер магазина:__ 361
   * __Секретный ключ магазина:__ b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d
   * __Домен страницы оплаты:__ checkout.begateway.com
+  * __Домен платёжного шлюза:__ demo-gateway.begateway.com
   * __Режим работы:__ Тестовый
 
 Используйте следующие данные карты для успешного тестового платежа:
