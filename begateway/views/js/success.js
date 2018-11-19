@@ -2,6 +2,8 @@ $(function () {
     var $confirmation = $('#begateway__confirmation');
     var url = $confirmation.data('update-url'),
         order_id = $confirmation.data('order-id'),
+        successMsg  = $confirmation.data('success-msg'),
+        failMsg = $confirmation.data('fail-msg')
         wait = 5000;
 
     updateStatus();
@@ -15,13 +17,13 @@ $(function () {
             },
             success: function (data) {
                 if (data.success) {
-                    showSuccess(data.message);
+                    showSuccess(successMsg);
                 }
                 else if (data.retry) {
                     setTimeout(updateStatus, wait);
                 }
                 else {
-                    showWarning(data.message);
+                    showWarning(failMsg);
                 }
             },
             error: function (xhr, textStatus) {

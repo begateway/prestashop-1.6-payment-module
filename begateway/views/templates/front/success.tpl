@@ -15,7 +15,9 @@
 
 <div id="begateway__confirmation" class="begateway__confirmation bootstrap"
      data-update-url="{$status_link|escape:'htmlall':'UTF-8'}"
-     data-order-id="{$order_id|intval}">
+     data-order-id="{$order_id|intval}"
+     data-success-msg="{l s='Your payment was completed! Please check order history for details.' mod='begateway'}"
+     data-fail-msg="{l s='Your payment status was updated. Please check order history for details.' mod='begateway'}">
     <div id="begateway__loading" class="begateway__loading">
         <img class="begateway__loading-image" src="{$begateway_path|escape:'htmlall':'UTF-8'}views/img/img-loader.gif"
              alt="{l s='Please wait' mod='begateway'}"/>
