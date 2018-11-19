@@ -3,10 +3,10 @@
 	<name>begateway</name>
 	<displayName><![CDATA[BeGateway]]></displayName>
 	<version><![CDATA[1.4.0]]></version>
-	<description><![CDATA[Accept online payments]]></description>
-	<author><![CDATA[]]></author>
+	<description><![CDATA[Принимайте онлайн платежи]]></description>
+	<author><![CDATA[eComCharge]]></author>
 	<tab><![CDATA[payments_gateways]]></tab>
-	<confirmUninstall><![CDATA[Are you sure you want to uninstall?]]></confirmUninstall>
+	<confirmUninstall><![CDATA[Вы уверены, что хотите удалить модуль?]]></confirmUninstall>
 	<is_configurable>1</is_configurable>
 	<need_instance>1</need_instance>
 	<limited_countries></limited_countries>

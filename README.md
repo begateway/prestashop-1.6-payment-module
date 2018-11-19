@@ -1,115 +1,128 @@
-## PrestaShop payment module
+# PrestaShop payment module
 
 [Русская версия](#модуль-оплаты-prestashop)
 
-### Install module
+## Install module
 
   * Backup your webstore and database
-  * Download [begateway.zip](https://github.com/beGateway/prestashop-payment-module/raw/master/begateway.zip)
+  * Download [begateway.zip](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/begateway.zip)
   * Login to your PrestaShop admin area and select the _Modules_ menu
   * Click _Add a new module_
 
-![Add a new module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-button.png)
+![Add a new module](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-button.png)
 
   * Upload the archive _begateway.zip_ via a module installer
 
-![Upload a new module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-file.png)
+![Upload a new module](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-file.png)
 
-  * Locate _beGateway_ in available modules and install it
+  * Locate _BeGateway_ in available modules and install it
 
-![Install module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-install.png)
+![Install module](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-install.png)
 
-### Module configuration
+## Module configuration
 
 At the payment module configuration page:
 
-  * Enter in fields _Shop Id_, _Shop secret key_, _Payment gateway domain_ and _Payment page domain_ values received from your payment processor.
+  * Enter in fields _Shop Id_, _Shop secret key_ and _Checkout page domain_ values received from your payment processor.
   * Select a default transaction type: __Payment__ or __Authorization__
+  * Disable or enable the module test mode.
+  * Enable payment methods you want to accept payments with.
 
-![Configure module](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/config-module.png)
+![Configure module](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/config-module.png)
 
-### You are done!
+## You are done!
 
-### Notes
+## Notes
 
 Tested and developed with PrestaShop 1.6
 
 Compatible with PrestaShop 1.5
 
-### Demo credentials
+## Testing
 
-You are free to use the settings to configure the module to process
-payments with a demo gateway.
+You can use the following information to adjust the payment method in test mode:
 
-  * Shop Id __361__
-  * Shop secret key __b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d__
-  * Payment gateway domain __demo-gateway.begateway.com__
-  * Payment page domain __checkout.begateway.com__
+  * __Shop ID:__ 361
+  * __Shop Key:__ b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d
+  * __Checkout page domain:__ checkout.begateway.com
 
-Use the test data to make a test payment:
+Use the following test card to make successful test payment:
 
-  * card number __4200000000000000__
-  * card name __John Doe__
-  * card expiry month __01__ to get a success payment
-  * card expiry month __10__ to get a failed payment
-  * CVC __123__
+  * Card number: 4200000000000000
+  * Name on card: JOHN DOE
+  * Card expiry date: 01/30
+  * CVC: 123
 
-### Contributing
+Use the following test card to make failed test payment:
+
+  * Card number: 4005550000000019
+  * Name on card: JOHN DOE
+  * Card expiry date: 01/30
+  * CVC: 123
+
+## Contributing
 
 Issue pull requests or send feature requests.
 
-## Модуль оплаты PrestaShop
+# Модуль оплаты PrestaShop
 
 [English version](#prestashop-payment-module)
 
-### Установка плагина
+## Установка модуля
 
   * Создайте резервную копию вашего магазина и базы данных
-  * Скачайте архив плагина [begateway.zip](https://github.com/beGateway/prestashop-payment-module/raw/master/begateway.zip)
+  * Скачайте архив модуля [begateway.zip](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/begateway.zip)
   * Зайдите в зону администратора магазина и выберете меню _Модули_
   * Нажмите _Добавить модуль_
 
-![Добавить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-button-ru.png)
+![Добавить модуль](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-button-ru.png)
 
   * Загрузите модуль _begateway.zip_ через _ДОБАВИТЬ МОДУЛЬ_
 
-![Загрузить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-file-ru.png)
+![Загрузить модуль](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-file-ru.png)
 
-  * Найдите модуль _beGateway_ в списке модулей и установите его
+  * Найдите модуль _BeGateway_ в списке модулей и установите его
 
-![Установить модуль](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/add-module-install.png)
+![Установить модуль](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-install-ru.png)
 
-### Настройка магазина
+## Настройка магазина
 
 На странице настройки модуля:
 
-  * Введите в полях _Id магазина_, _Ключ магазина_, _Домен платежного шлюза_ и _Домен платежной страницы_ значения, полученные от вашей платежной компании
+  * Введите в полях _Id магазина_, _Ключ магазина_ и _Домен страницы оплаты_ значения, полученные от вашей платежной компании
   * Выберете тип транзакции по умолчанию: __Payment__ or __Authorization__
+  * Включите или выключите тестовый режим работы модуля
+  * Выберете способы оплаты, которыми хотите принимать платежи
 
-![Настройка модуля](https://github.com/beGateway/prestashop-payment-module/raw/master/doc/config-module.png)
+![Настройка модуля](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/config-module-ru.png)
 
-### Готово!
+## Готово!
 
-### Примечания
+## Примечания
 
 Разработанно и протестированно с PrestaShop 1.6
 
 Совместимо с PrestaShop 1.5
 
-### Тестовые данные
+## Тестирование
 
-Вы можете использовать следующие данные, чтобы настроить способ оплаты в
-тестовом режиме:
+Вы можете использовать следующие данные, чтобы настроить способ оплаты в тестовом режиме
 
-  * Идентификационный номер магазина __361__
-  * Секретный ключ магазина __b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d__
-  * Домен платежного шлюза __demo-gateway.begateway.com__
-  * Домен платежной страницы __checkout.begateway.com__
+  * __Идентификационный номер магазина:__ 361
+  * __Секретный ключ магазина:__ b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d
+  * __Домен страницы оплаты:__ checkout.begateway.com
+  * __Режим работы:__ Тестовый
 
-Используйте следующий тестовый набор для тестового платежа:
+Используйте следующие данные карты для успешного тестового платежа:
 
-  * номер карты __4200000000000000__
-  * имя на карте __John Doe__
-  * месяц срока действия карты __01__, чтобы получить успешный платеж
-  * месяц срока действия карты __10__, чтобы получить неуспешный платеж
-  * CVC __123__
+  * Номер карты: 4200000000000000
+  * Имя на карте: JOHN DOE
+  * Месяц срока действия карты: 01/30
+  * CVC: 123
+
+Используйте следующие данные карты для неуспешного тестового платежа:
+
+  * Номер карты: 4005550000000019
+  * Имя на карте: JOHN DOE
+  * Месяц срока действия карты: 01/30
+  * CVC: 123
