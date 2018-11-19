@@ -310,7 +310,7 @@ class BeGatewayOrder implements BeGatewayOrderInterface
     {
         $transaction = $this->getTransaction();
 
-        return BeGatewayHelper::round($this->getAmount() - $transaction->getVoidAmount());
+        return BeGatewayHelper::round($this->getAmount() - $transaction->getVoidedAmount());
     }
 
 

@@ -86,6 +86,7 @@ class BeGatewayIpn
         $transaction->setTransactionId($transaction_id);
         $transaction->setStatus($state);
         $transaction->addAmount($data['amount']);
+        $transaction->setTransactionType($data['transactionType']);
 
         $message = $data['test'] ? $this->module->l('TEST') : '';
 

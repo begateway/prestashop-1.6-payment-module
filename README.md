@@ -23,7 +23,7 @@
 
 At the payment module configuration page:
 
-  * Enter in fields _Shop Id_, _Shop secret key_ and _Checkout page domain_ values received from your payment processor.
+  * Enter in fields _Shop Id_, _Shop secret key_, _Checkout page domain_ and _Gateway page domain_ values received from your payment processor.
   * Select a default transaction type: __Payment__ or __Authorization__
   * Disable or enable the module test mode.
   * Enable payment methods you want to accept payments with.
@@ -89,7 +89,7 @@ Issue pull requests or send feature requests.
 
 На странице настройки модуля:
 
-  * Введите в полях _Id магазина_, _Ключ магазина_ и _Домен страницы оплаты_ значения, полученные от вашей платежной компании
+  * Введите в полях _Id магазина_, _Ключ магазина_, _Домен страницы оплаты_ и _Домен платёжного шлюза_ значения, полученные от вашей платежной компании
   * Выберете тип транзакции по умолчанию: __Payment__ or __Authorization__
   * Включите или выключите тестовый режим работы модуля
   * Выберете способы оплаты, которыми хотите принимать платежи
