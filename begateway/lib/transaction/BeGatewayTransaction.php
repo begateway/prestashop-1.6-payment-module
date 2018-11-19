@@ -69,12 +69,12 @@ class BeGatewayTransaction implements BeGatewayTransactionInterface
 
     public function canBeCaptured()
     {
-        return $this->isSuccess() && !$this->isCaptured() && $this->transaction_type == 'authorization';
+        return $this->isSuccess() && !$this->isCaptured() && !$this->isVoided() && $this->transaction_type == 'authorization';
     }
 
     public function canBeVoided()
     {
-        return $this->isSuccess() && !$this->isVoided() && $this->transaction_type == 'authorization';
+        return $this->isSuccess() && !$this->isVoided() && !$this->isCaptured() && $this->transaction_type == 'authorization';
     }
 
     public function isSuccess()

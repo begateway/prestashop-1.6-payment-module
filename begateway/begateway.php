@@ -207,7 +207,8 @@ class BeGateway extends PaymentModule
 
           $html = $this->display(__FILE__, 'views/templates/admin/order/refund.tpl');
 
-      } elseif ($order->canCaptureAmount(self::MIN_AMOUNT)) {
+      } else {
+        if ($order->canCaptureAmount(self::MIN_AMOUNT)) {
           $this->context->smarty->assign(
               [
                   'base_url'                 => _PS_BASE_URL_ . __PS_BASE_URI__,
@@ -219,8 +220,8 @@ class BeGateway extends PaymentModule
           );
 
           $html = $this->display(__FILE__, 'views/templates/admin/order/capture.tpl');
-
-      } elseif ($order->canVoidAmount(self::MIN_AMOUNT)) {
+        }
+        if ($order->canVoidAmount(self::MIN_AMOUNT)) {
           $this->context->smarty->assign(
               [
                   'base_url'                 => _PS_BASE_URL_ . __PS_BASE_URI__,
@@ -230,7 +231,8 @@ class BeGateway extends PaymentModule
               ]
           );
 
-          $html = $this->display(__FILE__, 'views/templates/admin/order/void.tpl');
+          $html .= $this->display(__FILE__, 'views/templates/admin/order/void.tpl');
+        }
       }
 
       return $html;
@@ -265,6 +267,7 @@ class BeGateway extends PaymentModule
   }
 
   protected function capture($order, $amount) {
+      $transaction = $order->getTransaction();
       $capture = new \BeGateway\CaptureOperation;
       $capture->setParentUid($transaction->getTransactionId());
       $capture->money->setCurrency($order->getCurrency());
@@ -275,6 +278,7 @@ class BeGateway extends PaymentModule
       if ($response->isSuccess()) {
 
         $transaction->setTransactionType('payment');
+        $transaction->setTransactionId($response->getUid());
         $transaction->addCapturedAmount($amount);
         $transaction->save();
 
@@ -287,6 +291,7 @@ class BeGateway extends PaymentModule
   }
 
   protected function void($order, $amount) {
+      $transaction = $order->getTransaction();
       $void = new \BeGateway\VoidOperation;
       $void->setParentUid($transaction->getTransactionId());
       $void->money->setCurrency($order->getCurrency());
