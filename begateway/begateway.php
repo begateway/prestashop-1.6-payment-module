@@ -9,10 +9,11 @@ require_once _PS_MODULE_DIR_ . 'begateway/lib/BeGatewayAutoload.php';
 
 class BeGateway extends PaymentModule
 {
-  const TEST_SHOP   = 361;
-  const TEST_KEY    = 'b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d';
-  const TEST_DOMAIN = 'checkout.begateway.com';
-  const MIN_AMOUNT  = 0.01;
+  const TEST_SHOP      = 361;
+  const TEST_KEY       = 'b8647b68898b084b836474ed8d61ffe117c9a01168d867f24953b776ddcb134d';
+  const TEST_DOMAIN    = 'checkout.begateway.com';
+  const TEST_DOMAIN_GW = 'demo-gateway.begateway.com';
+  const MIN_AMOUNT     = 0.01;
 
   protected $session;
 
@@ -30,6 +31,7 @@ class BeGateway extends PaymentModule
     parent::__construct();
 
     \BeGateway\Settings::$checkoutBase = 'https://' . trim(Configuration::get('BEGATEWAY_DOMAIN_CHECKOUT'));
+    \BeGateway\Settings::$gatewayBase = 'https://' . trim(Configuration::get('BEGATEWAY_DOMAIN_GATEWAY'));
     \BeGateway\Settings::$shopId  = trim(Configuration::get('BEGATEWAY_SHOP_ID'));
     \BeGateway\Settings::$shopKey = trim(Configuration::get('BEGATEWAY_SHOP_PASS'));
 
@@ -47,6 +49,7 @@ class BeGateway extends PaymentModule
       OR !Configuration::updateValue('BEGATEWAY_SHOP_PASS', $this::TEST_KEY)
       OR !Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', '')
       OR !Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', $this::TEST_DOMAIN)
+      OR !Configuration::updateValue('BEGATEWAY_DOMAIN_GATEWAY', $this::TEST_DOMAIN_GW)
       OR !Configuration::updateValue('BEGATEWAY_TEST_MODE', 1)
       OR !Configuration::updateValue('BEGATEWAY_VISA', 1)
       OR !Configuration::updateValue('BEGATEWAY_MASTERCARD', 1)
@@ -93,6 +96,7 @@ class BeGateway extends PaymentModule
       OR !Configuration::deleteByName('BEGATEWAY_SHOP_PASS')
       OR !Configuration::deleteByName('BEGATEWAY_SHOP_PAYTYPE')
       OR !Configuration::deleteByName('BEGATEWAY_DOMAIN_CHECKOUT')
+      OR !Configuration::deleteByName('BEGATEWAY_DOMAIN_GATEWAY')
       OR !Configuration::deleteByName('BEGATEWAY_TEST_MODE')
       OR !Configuration::deleteByName('BEGATEWAY_VISA')
       OR !Configuration::deleteByName('BEGATEWAY_ERIP')
@@ -310,6 +314,7 @@ class BeGateway extends PaymentModule
       Configuration::updateValue('BEGATEWAY_SHOP_ID', trim(Tools::getValue('BEGATEWAY_SHOP_ID')));
       Configuration::updateValue('BEGATEWAY_SHOP_PASS', trim(Tools::getValue('BEGATEWAY_SHOP_PASS')));
       Configuration::updateValue('BEGATEWAY_DOMAIN_CHECKOUT', trim(Tools::getValue('BEGATEWAY_DOMAIN_CHECKOUT')));
+      Configuration::updateValue('BEGATEWAY_DOMAIN_GATEWAY', trim(Tools::getValue('BEGATEWAY_DOMAIN_GATEWAY')));
       Configuration::updateValue('BEGATEWAY_SHOP_PAYTYPE', trim(Tools::getValue('BEGATEWAY_SHOP_PAYTYPE')));
       Configuration::updateValue('BEGATEWAY_TEST_MODE', (trim(Tools::getValue('BEGATEWAY_TEST_MODE'))));
       Configuration::updateValue('BEGATEWAY_VISA', (trim(Tools::getValue('BEGATEWAY_VISA'))));
@@ -349,6 +354,13 @@ class BeGateway extends PaymentModule
                   'type'     => 'text',
                   'label'    => $this->l('Checkout page domain'),
                   'name'     => 'BEGATEWAY_DOMAIN_CHECKOUT',
+                  'size'     => 40,
+                  'required' => true,
+              ],
+              [
+                  'type'     => 'text',
+                  'label'    => $this->l('Gateway page domain'),
+                  'name'     => 'BEGATEWAY_DOMAIN_GATEWAY',
                   'size'     => 40,
                   'required' => true,
               ],
@@ -513,6 +525,7 @@ class BeGateway extends PaymentModule
       $helper->fields_value['BEGATEWAY_SHOP_ID']         = Configuration::get('BEGATEWAY_SHOP_ID');
       $helper->fields_value['BEGATEWAY_SHOP_PASS']       = Configuration::get('BEGATEWAY_SHOP_PASS');
       $helper->fields_value['BEGATEWAY_DOMAIN_CHECKOUT'] = Configuration::get('BEGATEWAY_DOMAIN_CHECKOUT');
+      $helper->fields_value['BEGATEWAY_DOMAIN_GATEWAY']  = Configuration::get('BEGATEWAY_DOMAIN_GATEWAY');
       $helper->fields_value['BEGATEWAY_SHOP_PAYTYPE']    = Configuration::get('BEGATEWAY_SHOP_PAYTYPE');
       $helper->fields_value['BEGATEWAY_TEST_MODE']       = Configuration::get('BEGATEWAY_TEST_MODE');
       $helper->fields_value['BEGATEWAY_VISA']            = Configuration::get('BEGATEWAY_VISA');

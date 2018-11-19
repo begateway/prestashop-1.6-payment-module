@@ -19,6 +19,7 @@ $_MODULE['<{begateway}prestashop>begateway_254f642527b45bc260048e30704edb39'] = 
 $_MODULE['<{begateway}prestashop>begateway_d7359c448bde24973c610406e62bfe98'] = 'Id магазина';
 $_MODULE['<{begateway}prestashop>begateway_6a6b8d2a689ed1aa514283a95b064e70'] = 'Секретный ключ магазина';
 $_MODULE['<{begateway}prestashop>begateway_9b819a1c5638a529c210026253f3885c'] = 'Домен страницы оплаты';
+$_MODULE['<{begateway}prestashop>begateway_e1fa04da3824bfd0321d7923dc7354d5'] = 'Домен платёжного шлюза';
 $_MODULE['<{begateway}prestashop>begateway_384036f8b0067ec3bb710a92f8734b3b'] = 'Тип операции';
 $_MODULE['<{begateway}prestashop>begateway_c453a4b8e8d98e82f35b67f433e3b4da'] = 'Оплата';
 $_MODULE['<{begateway}prestashop>begateway_9cd8a2455b1839ff98ef70c05b9b5983'] = 'Авторизация';
