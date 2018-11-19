@@ -83,7 +83,7 @@ Issue pull requests or send feature requests.
 
   * Найдите модуль _BeGateway_ в списке модулей и установите его
 
-![Установить модуль](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-install.png)
+![Установить модуль](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/add-module-install-ru.png)
 
 ## Настройка магазина
 
@@ -94,7 +94,7 @@ Issue pull requests or send feature requests.
   * Включите или выключите тестовый режим работы модуля
   * Выберете способы оплаты, которыми хотите принимать платежи
 
-![Настройка модуля](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/config-module.png)
+![Настройка модуля](https://github.com/begateway/prestashop-1.6-payment-module/raw/master/doc/config-module-ru.png)
 
 ## Готово!
 
